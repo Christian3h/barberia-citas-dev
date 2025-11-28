@@ -73,9 +73,9 @@ export function BarberPage() {
   const pending = todayAppointments.filter(a => a.status === 'scheduled');
   const completed = todayAppointments.filter(a => a.status === 'done');
 
-  // Calcular ingresos
+  // Calcular ingresos (apt.service contiene el ID del servicio)
   const revenue = completed.reduce((sum, apt) => {
-    const service = services.find(s => s.name === apt.service);
+    const service = services.find(s => s.id === apt.service || s.name === apt.service);
     return sum + (service?.price || 0);
   }, 0);
 

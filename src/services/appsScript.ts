@@ -1,9 +1,17 @@
 // ============================================
 // SERVICIO DE APPS SCRIPT (ESCRITURA)
 // Maneja todas las operaciones de escritura via Apps Script Web App
+// Con invalidación automática de caché después de cada operación
 // ============================================
 
 import { GOOGLE_SHEETS_CONFIG } from '@/config';
+import { 
+  invalidateAppointmentsCache, 
+  invalidateUsersCache, 
+  invalidateServicesCache,
+  invalidateUnavailableCache,
+  invalidateSettingsCache
+} from './googleSheets';
 import type {
   CreateAppointmentPayload,
   ApiResponse,
@@ -136,10 +144,14 @@ export async function deleteRecord(
 export async function createAppointment(
   payload: CreateAppointmentPayload
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean; id: string }>({
     action: 'createAppointment',
     ...payload,
   });
+  if (result.success) {
+    invalidateAppointmentsCache();
+  }
+  return result;
 }
 
 /**
@@ -149,11 +161,15 @@ export async function updateAppointmentStatus(
   id: string,
   status: 'scheduled' | 'cancelled' | 'done'
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateAppointmentStatus',
     id,
     status,
   });
+  if (result.success) {
+    invalidateAppointmentsCache();
+  }
+  return result;
 }
 
 /**
@@ -184,10 +200,14 @@ export async function completeAppointment(
 export async function createService(
   data: Omit<BarberService, 'id'>
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean; id: string }>({
     action: 'createService',
     ...data,
   });
+  if (result.success) {
+    invalidateServicesCache();
+  }
+  return result;
 }
 
 /**
@@ -197,11 +217,15 @@ export async function updateService(
   id: string,
   data: Partial<BarberService>
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateService',
     id,
     ...data,
   });
+  if (result.success) {
+    invalidateServicesCache();
+  }
+  return result;
 }
 
 /**
@@ -210,10 +234,14 @@ export async function updateService(
 export async function deleteService(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'deleteService',
     id,
   });
+  if (result.success) {
+    invalidateServicesCache();
+  }
+  return result;
 }
 
 // ============================================
@@ -226,10 +254,14 @@ export async function deleteService(
 export async function createUser(
   data: Omit<User, 'id'>
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean; id: string }>({
     action: 'createUser',
     ...data,
   });
+  if (result.success) {
+    invalidateUsersCache();
+  }
+  return result;
 }
 
 /**
@@ -239,11 +271,15 @@ export async function updateUser(
   id: string,
   data: Partial<User>
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateUser',
     id,
     ...data,
   });
+  if (result.success) {
+    invalidateUsersCache();
+  }
+  return result;
 }
 
 /**
@@ -252,10 +288,14 @@ export async function updateUser(
 export async function deleteUser(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'deleteUser',
     id,
   });
+  if (result.success) {
+    invalidateUsersCache();
+  }
+  return result;
 }
 
 // ============================================
@@ -276,10 +316,14 @@ export async function createUnavailable(
     reason?: string;
   }
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean; id: string }>({
     action: 'createUnavailable',
     ...payload,
   });
+  if (result.success) {
+    invalidateUnavailableCache();
+  }
+  return result;
 }
 
 /**
@@ -288,10 +332,14 @@ export async function createUnavailable(
 export async function deleteUnavailable(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'deleteUnavailable',
     id,
   });
+  if (result.success) {
+    invalidateUnavailableCache();
+  }
+  return result;
 }
 
 // ============================================
@@ -305,11 +353,15 @@ export async function updateSetting(
   key: string,
   value: string | number
 ): Promise<ApiResponse<{ success: boolean }>> {
-  return fetchAppsScript({
+  const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateSetting',
     key,
     value,
   });
+  if (result.success) {
+    invalidateSettingsCache();
+  }
+  return result;
 }
 
 // ============================================

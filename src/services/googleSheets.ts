@@ -1,9 +1,11 @@
 // ============================================
 // SERVICIO DE GOOGLE SHEETS
 // Lectura usando Google Visualization API (público)
+// Con sistema de caché para optimizar peticiones
 // ============================================
 
 import { GOOGLE_SHEETS_CONFIG } from '@/config';
+import { cache } from './cache';
 import type {
   Appointment,
   User,
@@ -153,14 +155,14 @@ async function readSheet<T>(sheetName: string): Promise<T[]> {
 }
 
 // ============================================
-// FUNCIONES DE LECTURA
+// FUNCIONES DE LECTURA (CON CACHÉ)
 // ============================================
 
 /**
- * Obtiene todas las citas
+ * Obtiene todas las citas (con caché de 30 segundos)
  */
 export async function getAppointments(): Promise<Appointment[]> {
-  return readSheet<Appointment>(SHEETS.APPOINTMENTS);
+  return cache.get('appointments', () => readSheet<Appointment>(SHEETS.APPOINTMENTS));
 }
 
 /**
@@ -196,10 +198,10 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
 }
 
 /**
- * Obtiene todos los usuarios
+ * Obtiene todos los usuarios (con caché de 30 segundos)
  */
 export async function getUsers(): Promise<User[]> {
-  return readSheet<User>(SHEETS.USERS);
+  return cache.get('users', () => readSheet<User>(SHEETS.USERS));
 }
 
 /**
@@ -219,10 +221,10 @@ export async function getUserById(id: string): Promise<User | null> {
 }
 
 /**
- * Obtiene todos los bloqueos de horario
+ * Obtiene todos los bloqueos de horario (con caché de 30 segundos)
  */
 export async function getUnavailable(): Promise<Unavailable[]> {
-  return readSheet<Unavailable>(SHEETS.UNAVAILABLE);
+  return cache.get('unavailable', () => readSheet<Unavailable>(SHEETS.UNAVAILABLE));
 }
 
 /**
@@ -258,14 +260,15 @@ function parseTimeValue(value: unknown): string {
 }
 
 /**
- * Obtiene la configuración del sistema
+ * Obtiene la configuración del sistema (con caché de 30 segundos)
  */
 export async function getSettings(): Promise<AppSettings> {
-  try {
-    const settings = await readSheet<Setting>(SHEETS.SETTINGS);
+  return cache.get('settings', async () => {
+    try {
+      const settings = await readSheet<Setting>(SHEETS.SETTINGS);
 
-    if (settings.length === 0) {
-      return DEFAULT_SETTINGS;
+      if (settings.length === 0) {
+        return DEFAULT_SETTINGS;
     }
 
     const result = { ...DEFAULT_SETTINGS };
@@ -290,25 +293,71 @@ export async function getSettings(): Promise<AppSettings> {
       }
     });
 
-    return result;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+      return result;
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  });
 }
 
 /**
- * Obtiene servicios disponibles
+ * Obtiene servicios disponibles (con caché de 30 segundos)
  */
 export async function getServices(): Promise<BarberService[]> {
-  const services = await readSheet<BarberService>(SHEETS.SERVICES);
-  return services;
+  return cache.get('services', () => readSheet<BarberService>(SHEETS.SERVICES));
 }
 
 /**
- * Obtiene citas archivadas
+ * Obtiene citas archivadas (con caché de 30 segundos)
  */
 export async function getArchivedAppointments(): Promise<ArchivedAppointment[]> {
-  return readSheet<ArchivedAppointment>(SHEETS.ARCHIVE);
+  return cache.get('archive', () => readSheet<ArchivedAppointment>(SHEETS.ARCHIVE));
+}
+
+// ============================================
+// FUNCIONES DE INVALIDACIÓN DE CACHÉ
+// ============================================
+
+/**
+ * Invalida el caché de citas (llamar después de crear/editar/borrar)
+ */
+export function invalidateAppointmentsCache(): void {
+  cache.invalidate('appointments');
+}
+
+/**
+ * Invalida el caché de usuarios/barberos
+ */
+export function invalidateUsersCache(): void {
+  cache.invalidate('users');
+}
+
+/**
+ * Invalida el caché de servicios
+ */
+export function invalidateServicesCache(): void {
+  cache.invalidate('services');
+}
+
+/**
+ * Invalida el caché de bloqueos
+ */
+export function invalidateUnavailableCache(): void {
+  cache.invalidate('unavailable');
+}
+
+/**
+ * Invalida el caché de configuración
+ */
+export function invalidateSettingsCache(): void {
+  cache.invalidate('settings');
+}
+
+/**
+ * Limpia todo el caché
+ */
+export function clearAllCache(): void {
+  cache.clear();
 }
 
 // ============================================
@@ -339,6 +388,13 @@ export const googleSheetsService = {
   getSettings,
   getServices,
   getArchivedAppointments,
+  // Invalidación de caché
+  invalidateAppointmentsCache,
+  invalidateUsersCache,
+  invalidateServicesCache,
+  invalidateUnavailableCache,
+  invalidateSettingsCache,
+  clearAllCache,
 };
 
 export default googleSheetsService;
