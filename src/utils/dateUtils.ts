@@ -132,10 +132,33 @@ export function formatDisplayDate(dateStr: string): string {
 
 /**
  * Formatea fecha corta para tablas
+ * Maneja valores inválidos de forma segura
  */
 export function formatShortDate(dateStr: string): string {
-  const date = parseDate(dateStr);
-  return format(date, 'dd/MM/yyyy', { locale: es });
+  if (!dateStr || typeof dateStr !== 'string') {
+    return '-';
+  }
+  
+  try {
+    // Si viene en formato Date(year,month,day) de Google Sheets
+    if (dateStr.startsWith('Date(')) {
+      const match = dateStr.match(/Date\((\d+),(\d+),(\d+)/);
+      if (match) {
+        const year = match[1];
+        const month = String(Number(match[2]) + 1).padStart(2, '0');
+        const day = String(match[3]).padStart(2, '0');
+        dateStr = `${year}-${month}-${day}`;
+      }
+    }
+    
+    const date = parseDate(dateStr);
+    if (isNaN(date.getTime())) {
+      return dateStr; // Devolver el valor original si no se puede parsear
+    }
+    return format(date, 'dd/MM/yyyy', { locale: es });
+  } catch {
+    return dateStr || '-';
+  }
 }
 
 /**

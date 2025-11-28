@@ -11,7 +11,7 @@ interface CacheEntry<T> {
 class SimpleCache {
   private cache: Map<string, CacheEntry<unknown>> = new Map();
   private pendingRequests: Map<string, Promise<unknown>> = new Map();
-  
+
   // Tiempo de vida del caché: 30 segundos
   private readonly TTL = 30 * 1000;
 

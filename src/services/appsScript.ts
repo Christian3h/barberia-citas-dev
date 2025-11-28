@@ -5,9 +5,9 @@
 // ============================================
 
 import { GOOGLE_SHEETS_CONFIG } from '@/config';
-import { 
-  invalidateAppointmentsCache, 
-  invalidateUsersCache, 
+import {
+  invalidateAppointmentsCache,
+  invalidateUsersCache,
   invalidateServicesCache,
   invalidateUnavailableCache,
   invalidateSettingsCache

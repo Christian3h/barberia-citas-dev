@@ -115,10 +115,10 @@ function parseVisualizationResponse<T>(text: string): T[] {
           return;
         }
 
-        // Normalizar según el tipo de campo
-        if (header === 'date') {
+        // Normalizar según el tipo de campo (incluye campos de Unavailable)
+        if (header === 'date' || header === 'start_date' || header === 'end_date') {
           obj[header] = normalizeDate(value, formatted);
-        } else if (header === 'time') {
+        } else if (header === 'time' || header === 'start_time' || header === 'end_time') {
           obj[header] = normalizeTime(value, formatted);
         } else {
           obj[header] = value;
