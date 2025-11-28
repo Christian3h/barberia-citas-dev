@@ -43,6 +43,59 @@ function parseVisualizationResponse<T>(text: string): T[] {
     // Obtener headers de las columnas
     const headers = cols.map((col: { label: string; id: string }) => col.label || col.id);
 
+    // Función para normalizar fechas a formato YYYY-MM-DD
+    const normalizeDate = (value: unknown, formattedValue?: string): string => {
+      // Primero intentar usar el valor formateado si es una fecha válida
+      if (formattedValue) {
+        const trimmed = formattedValue.trim();
+        // Formato YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          return trimmed;
+        }
+        // Formato DD/MM/YYYY -> convertir a YYYY-MM-DD
+        const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (dmyMatch) {
+          return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
+        }
+      }
+
+      // Si es Date(year,month,day) de Google
+      if (typeof value === 'string' && value.startsWith('Date(')) {
+        const match = value.match(/Date\((\d+),(\d+),(\d+)/);
+        if (match) {
+          const year = match[1];
+          const month = String(Number(match[2]) + 1).padStart(2, '0');
+          const day = String(match[3]).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+      }
+
+      return String(value || '');
+    };
+
+    // Función para normalizar horas a formato HH:MM
+    const normalizeTime = (value: unknown, formattedValue?: string): string => {
+      // Usar valor formateado si existe
+      if (formattedValue) {
+        const trimmed = formattedValue.trim();
+        // Si ya es HH:MM o H:MM
+        if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+          const [h, m] = trimmed.split(':');
+          return `${h.padStart(2, '0')}:${m}`;
+        }
+      }
+
+      // Si es datetime de Google Date(1899,11,30,14,30,0)
+      if (typeof value === 'string' && value.startsWith('Date(')) {
+        const match = value.match(/Date\(\d+,\d+,\d+,(\d+),(\d+)/);
+        if (match) {
+          return `${match[1].padStart(2, '0')}:${match[2].padStart(2, '0')}`;
+        }
+      }
+
+      return String(value || '');
+    };
+
     // Convertir filas a objetos
     return rows.map((row: { c: Array<{ v: unknown; f?: string } | null> }) => {
       const obj: Record<string, unknown> = {};
@@ -51,19 +104,23 @@ function parseVisualizationResponse<T>(text: string): T[] {
         const header = headers[index];
         if (!header) return;
 
-        let value: unknown = cell?.v;
+        const value = cell?.v;
+        const formatted = cell?.f;
 
         // Manejar valores nulos
         if (value === null || value === undefined) {
-          value = '';
-        }
-        // Manejar fechas de Google (Date(year,month,day))
-        else if (typeof value === 'string' && value.startsWith('Date(')) {
-          // Usar el valor formateado si existe
-          value = cell?.f || value;
+          obj[header] = '';
+          return;
         }
 
-        obj[header] = value;
+        // Normalizar según el tipo de campo
+        if (header === 'date') {
+          obj[header] = normalizeDate(value, formatted);
+        } else if (header === 'time') {
+          obj[header] = normalizeTime(value, formatted);
+        } else {
+          obj[header] = value;
+        }
       });
 
       return obj as T;

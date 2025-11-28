@@ -35,14 +35,19 @@ export function useAppointments(
   const [error, setError] = useState<string | null>(null);
 
   const fetchAppointments = useCallback(async () => {
-    if (!date) return;
-
     setLoading(true);
     setError(null);
 
     try {
       // Leer citas de Google Sheets
-      const allAppointments = await googleSheetsService.getAppointmentsByDate(date);
+      let allAppointments: Appointment[];
+
+      if (date) {
+        allAppointments = await googleSheetsService.getAppointmentsByDate(date);
+      } else {
+        // Si no hay fecha, cargar todas las citas
+        allAppointments = await googleSheetsService.getAppointments();
+      }
 
       // Filtrar por barbero si se especifica
       let filtered = allAppointments;
@@ -62,10 +67,11 @@ export function useAppointments(
   }, [date, barber_id, status]);
 
   useEffect(() => {
-    if (autoFetch && date) {
+    // Fetch siempre que autoFetch sea true (con o sin date)
+    if (autoFetch) {
       fetchAppointments();
     }
-  }, [autoFetch, date, fetchAppointments]);
+  }, [autoFetch, fetchAppointments]);
 
   const create = useCallback(async (payload: CreateAppointmentPayload) => {
     try {

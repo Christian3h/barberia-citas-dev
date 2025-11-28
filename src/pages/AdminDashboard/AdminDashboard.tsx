@@ -85,10 +85,14 @@ export function AdminDashboard() {
   );
 
   const { settings, loading: loadingSettings, updateSettings } = useSettings();
-  const { appointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({ date: selectedDate });
+  // Cargar todas las citas para el Dashboard, luego filtrar por fecha seleccionada en la tabla
+  const { appointments: allAppointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({});
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
   const { barbers, refetch: refetchBarbers } = useBarbers();
   const { services, refetch: refetchServices } = useServices();
+
+  // Filtrar citas por fecha seleccionada para la tabla de citas
+  const appointments = allAppointments.filter(apt => apt.date === selectedDate);
 
   // Verificar sesión al cargar
   useEffect(() => {
@@ -122,24 +126,46 @@ export function AdminDashboard() {
   // SUB-COMPONENTE: Dashboard Stats
   // ============================================
   const DashboardStats = () => {
-    const todayAppointments = appointments.filter(a => a.date === new Date().toISOString().split('T')[0]);
+    // Fecha de hoy en formato local YYYY-MM-DD
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // DEBUG: Ver qué fechas tienen las citas
+    console.log('=== DEBUG DASHBOARD ===');
+    console.log('Fecha de hoy:', todayStr);
+    console.log('Total citas cargadas:', allAppointments.length);
+    console.log('Fechas en citas:', allAppointments.map(a => ({ date: a.date, status: a.status })));
+
+    // Filtrar citas de hoy desde TODAS las citas
+    const todayAppointments = allAppointments.filter(a => {
+      const aptDate = String(a.date).trim();
+      const matches = aptDate === todayStr;
+      console.log(`Comparando: "${aptDate}" === "${todayStr}" => ${matches}`);
+      return matches;
+    });
+
+    console.log('Citas de hoy encontradas:', todayAppointments.length);
+
     const pending = todayAppointments.filter(a => a.status === 'scheduled').length;
     const completed = todayAppointments.filter(a => a.status === 'done').length;
+
+    // Calcular ingresos de citas completadas
     const revenue = todayAppointments
       .filter(a => a.status === 'done')
       .reduce((sum, a) => {
-        const service = services.find(s => s.name === a.service);
+        // Buscar servicio por nombre o ID
+        const service = services.find(s => s.name === a.service || s.id === a.service);
         return sum + (service?.price || 0);
       }, 0);
 
     const upcoming = todayAppointments
       .filter(a => a.status === 'scheduled')
-      .sort((a, b) => a.time.localeCompare(b.time))
+      .sort((a, b) => String(a.time).localeCompare(String(b.time)))
       .slice(0, 5);
 
     return (
       <div className="admin-section">
-        <h2>📊 Resumen del Día</h2>
+        <h2>Resumen del Día ({todayStr})</h2>
 
         <div className="stats-grid">
           <div className="stat-card">
