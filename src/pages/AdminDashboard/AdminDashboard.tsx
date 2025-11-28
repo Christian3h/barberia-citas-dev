@@ -213,100 +213,131 @@ export function AdminDashboard() {
   // ============================================
   // SUB-COMPONENTE: Appointments Table
   // ============================================
-  const AppointmentsTable = () => (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2>📅 Citas</h2>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="date-input"
-        />
-      </div>
+  const AppointmentsTable = () => {
+    const [actioningId, setActioningId] = useState<string | null>(null);
+    const [actionType, setActionType] = useState<'complete' | 'cancel' | null>(null);
 
-      {loadingAppointments ? (
-        <div className="loading-state">Cargando citas...</div>
-      ) : appointments.length === 0 ? (
-        <div className="empty-state">No hay citas para este día</div>
-      ) : (
-        <div className="table-responsive">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Hora</th>
-                <th>Cliente</th>
-                <th>Servicio</th>
-                <th>Barbero</th>
-                <th>Teléfono</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((apt) => (
-                <tr key={apt.id}>
-                  <td className="time-cell">{apt.time}</td>
-                  <td>{apt.customer_name}</td>
-                  <td>{apt.service}</td>
-                  <td>{barbers.find(b => b.id === apt.barber_id)?.name || apt.barber_id}</td>
-                  <td>{apt.phone}</td>
-                  <td>
-                    <span className={`status-badge status-${apt.status}`}>
-                      {APPOINTMENT_STATUS_LABELS[apt.status]?.label || apt.status}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
-                    {apt.status === 'scheduled' && (
-                      <>
-                        <button
-                          className="btn btn-small btn-success"
-                          onClick={() => completeAppointment(apt.id)}
-                          title="Completar"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="btn btn-small btn-danger"
-                          onClick={() => cancelAppointment(apt.id)}
-                          title="Cancelar"
-                        >
-                          ✕
-                        </button>
-                      </>
-                    )}
-                    {apt.phone && (
-                      <button
-                        className="btn btn-small btn-whatsapp"
-                        onClick={() => {
-                          const barberName = barbers.find(b => b.id === apt.barber_id)?.name || 'tu barbero';
-                          const phone = String(apt.phone).replace(/\D/g, '');
-                          const phoneFormatted = phone.startsWith('57') ? phone : `57${phone}`;
-                          const clientName = apt.customer_name?.trim() || 'cliente';
-                          const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${apt.service} - Barbero: ${barberName}. Te esperamos!`;
-                          const url = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
-                          window.open(url, '_blank');
-                        }}
-                        title="Enviar recordatorio por WhatsApp"
-                      >
-                        📱
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    const handleComplete = async (id: string) => {
+      setActioningId(id);
+      setActionType('complete');
+      try {
+        await completeAppointment(id);
+      } finally {
+        setActioningId(null);
+        setActionType(null);
+      }
+    };
+
+    const handleCancel = async (id: string) => {
+      setActioningId(id);
+      setActionType('cancel');
+      try {
+        await cancelAppointment(id);
+      } finally {
+        setActioningId(null);
+        setActionType(null);
+      }
+    };
+
+    return (
+      <div className="admin-section">
+        <div className="section-header">
+          <h2>📅 Citas</h2>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="date-input"
+          />
         </div>
-      )}
-    </div>
-  );
+
+        {loadingAppointments ? (
+          <div className="loading-state">Cargando citas...</div>
+        ) : appointments.length === 0 ? (
+          <div className="empty-state">No hay citas para este día</div>
+        ) : (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Cliente</th>
+                  <th>Servicio</th>
+                  <th>Barbero</th>
+                  <th>Teléfono</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments.map((apt) => (
+                  <tr key={apt.id}>
+                    <td className="time-cell">{apt.time}</td>
+                    <td>{apt.customer_name}</td>
+                    <td>{apt.service}</td>
+                    <td>{barbers.find(b => b.id === apt.barber_id)?.name || apt.barber_id}</td>
+                    <td>{apt.phone}</td>
+                    <td>
+                      <span className={`status-badge status-${apt.status}`}>
+                        {APPOINTMENT_STATUS_LABELS[apt.status]?.label || apt.status}
+                      </span>
+                    </td>
+                    <td className="actions-cell">
+                      {apt.status === 'scheduled' && (
+                        <>
+                          <button
+                            className="btn btn-small btn-success"
+                            onClick={() => handleComplete(apt.id)}
+                            disabled={actioningId === apt.id}
+                            title="Completar"
+                          >
+                            {actioningId === apt.id && actionType === 'complete' ? '⏳' : '✓'}
+                          </button>
+                          <button
+                            className="btn btn-small btn-danger"
+                            onClick={() => handleCancel(apt.id)}
+                            disabled={actioningId === apt.id}
+                            title="Cancelar"
+                          >
+                            {actioningId === apt.id && actionType === 'cancel' ? '⏳' : '✕'}
+                          </button>
+                        </>
+                      )}
+                      {apt.phone && (
+                        <button
+                          className="btn btn-small btn-whatsapp"
+                          onClick={() => {
+                            const barberName = barbers.find(b => b.id === apt.barber_id)?.name || 'tu barbero';
+                            const phone = String(apt.phone).replace(/\D/g, '');
+                            const phoneFormatted = phone.startsWith('57') ? phone : `57${phone}`;
+                            const clientName = apt.customer_name?.trim() || 'cliente';
+                            const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${apt.service} - Barbero: ${barberName}. Te esperamos!`;
+                            const url = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
+                            window.open(url, '_blank');
+                          }}
+                          title="Enviar recordatorio por WhatsApp"
+                        >
+                          📱
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ============================================
   // SUB-COMPONENTE: Unavailable Manager
   // ============================================
   const UnavailableManager = () => {
     const [showForm, setShowForm] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [newBlock, setNewBlock] = useState({
       barber_id: barbers[0]?.id || '',
       start_date: new Date().toISOString().split('T')[0],
@@ -319,8 +350,22 @@ export function AdminDashboard() {
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      await createUnavailable(newBlock);
-      setShowForm(false);
+      setIsSubmitting(true);
+      try {
+        await createUnavailable(newBlock);
+        setShowForm(false);
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const handleDelete = async (id: string) => {
+      setDeletingId(id);
+      try {
+        await deleteUnavailable(id);
+      } finally {
+        setDeletingId(null);
+      }
     };
 
     return (
@@ -405,10 +450,11 @@ export function AdminDashboard() {
                 value={newBlock.reason}
                 onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })}
                 placeholder="Ej: Vacaciones, Capacitación..."
+                disabled={isSubmitting}
               />
             </div>
-            <button type="submit" className="btn btn-primary">
-              Crear bloqueo
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? '⏳ Creando...' : 'Crear bloqueo'}
             </button>
           </form>
         )}
@@ -441,9 +487,10 @@ export function AdminDashboard() {
                     <td>
                       <button
                         className="btn btn-small btn-danger"
-                        onClick={() => deleteUnavailable(block.id)}
+                        onClick={() => handleDelete(block.id)}
+                        disabled={deletingId === block.id}
                       >
-                        Eliminar
+                        {deletingId === block.id ? '⏳...' : 'Eliminar'}
                       </button>
                     </td>
                   </tr>
@@ -470,6 +517,7 @@ export function AdminDashboard() {
       active: true,
     });
     const [saving, setSaving] = useState(false);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     const resetForm = () => {
       setFormData({ name: '', duration_min: 30, price: 0, description: '', active: true });
@@ -507,8 +555,13 @@ export function AdminDashboard() {
     };
 
     const toggleActive = async (service: BarberService) => {
-      await appsScriptApi.updateService(service.id, { active: !(service.active ?? true) });
-      refetchServices();
+      setTogglingId(service.id);
+      try {
+        await appsScriptApi.updateService(service.id, { active: !(service.active ?? true) });
+        refetchServices();
+      } finally {
+        setTogglingId(null);
+      }
     };
 
     return (
@@ -596,8 +649,9 @@ export function AdminDashboard() {
                     <button
                       className={`status-toggle ${(service.active ?? true) ? 'active' : 'inactive'}`}
                       onClick={() => toggleActive(service)}
+                      disabled={togglingId === service.id}
                     >
-                      {(service.active ?? true) ? '✅ Activo' : '❌ Inactivo'}
+                      {togglingId === service.id ? '⏳...' : (service.active ?? true) ? '✅ Activo' : '❌ Inactivo'}
                     </button>
                   </td>
                   <td className="actions-cell">
@@ -627,6 +681,7 @@ export function AdminDashboard() {
       active: true,
     });
     const [saving, setSaving] = useState(false);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     const resetForm = () => {
       setFormData({ name: '', email: '', phone: '', active: true });
@@ -663,8 +718,13 @@ export function AdminDashboard() {
     };
 
     const toggleActive = async (barber: User) => {
-      await appsScriptApi.updateUser(barber.id, { active: !barber.active });
-      refetchBarbers();
+      setTogglingId(barber.id);
+      try {
+        await appsScriptApi.updateUser(barber.id, { active: !barber.active });
+        refetchBarbers();
+      } finally {
+        setTogglingId(null);
+      }
     };
 
     return (
@@ -739,8 +799,9 @@ export function AdminDashboard() {
                     <button
                       className={`status-toggle ${barber.active ? 'active' : 'inactive'}`}
                       onClick={() => toggleActive(barber)}
+                      disabled={togglingId === barber.id}
                     >
-                      {barber.active ? '✅ Activo' : '❌ Inactivo'}
+                      {togglingId === barber.id ? '⏳...' : barber.active ? '✅ Activo' : '❌ Inactivo'}
                     </button>
                   </td>
                   <td className="actions-cell">

@@ -138,7 +138,7 @@ export function formatShortDate(dateStr: string): string {
   if (!dateStr || typeof dateStr !== 'string') {
     return '-';
   }
-  
+
   try {
     // Si viene en formato Date(year,month,day) de Google Sheets
     if (dateStr.startsWith('Date(')) {
@@ -150,7 +150,7 @@ export function formatShortDate(dateStr: string): string {
         dateStr = `${year}-${month}-${day}`;
       }
     }
-    
+
     const date = parseDate(dateStr);
     if (isNaN(date.getTime())) {
       return dateStr; // Devolver el valor original si no se puede parsear

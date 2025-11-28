@@ -17,6 +17,7 @@ export function BarberPage() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const { barbers, loading: loadingBarbers } = useBarbers();
   const { services } = useServices();
@@ -88,7 +89,12 @@ export function BarberPage() {
 
   const handleComplete = async (apt: Appointment) => {
     if (confirm(`¿Marcar como completada la cita de ${apt.customer_name}?`)) {
-      await completeAppointment(apt.id);
+      setCompletingId(apt.id);
+      try {
+        await completeAppointment(apt.id);
+      } finally {
+        setCompletingId(null);
+      }
     }
   };
 
@@ -210,9 +216,10 @@ export function BarberPage() {
                       <button
                         className="btn btn-success btn-action"
                         onClick={() => handleComplete(apt)}
+                        disabled={completingId === apt.id}
                         title="Marcar como completada"
                       >
-                        ✓
+                        {completingId === apt.id ? '⏳' : '✓'}
                       </button>
                     ) : (
                       <span className={`status-pill status-${apt.status}`}>
