@@ -1,0 +1,367 @@
+/* ============================================
+   BARBER PAGE STYLES
+   Vista móvil-first para barberos
+   ============================================ */
+
+.barber-page {
+  min-height: 100vh;
+  padding: var(--spacing-md);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Loading & Error screens */
+.loading-screen,
+.error-screen {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-md);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 4rem;
+}
+
+.error-screen h2 {
+  color: var(--text-primary);
+}
+
+.error-screen p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Header */
+.barber-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.barber-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.barber-avatar-large {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.barber-info-header h1 {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.barber-date {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+}
+
+.date-picker {
+  padding: var(--spacing-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* Stats */
+.barber-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.stat-mini {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.stat-mini-value {
+  display: block;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-mini-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.stat-revenue .stat-mini-value {
+  color: var(--color-success);
+}
+
+/* Next Appointment */
+.next-appointment {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  color: white;
+}
+
+.next-label {
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+  margin-bottom: var(--spacing-sm);
+}
+
+.next-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.next-time {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.next-details {
+  flex: 1;
+}
+
+.next-customer {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+}
+
+.next-service {
+  opacity: 0.9;
+  font-size: var(--font-size-sm);
+}
+
+.btn-complete {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: white;
+  color: var(--color-success);
+  border: none;
+  font-weight: 600;
+}
+
+.btn-complete:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Appointments Section */
+.appointments-section {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.appointments-section h2 {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Appointments List */
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.appointment-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--color-accent);
+  transition: all 0.2s;
+}
+
+.appointment-card.done {
+  opacity: 0.6;
+  border-left-color: var(--color-success);
+}
+
+.appointment-card.cancelled {
+  opacity: 0.5;
+  border-left-color: var(--color-error);
+  text-decoration: line-through;
+}
+
+.appointment-time {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 55px;
+}
+
+.appointment-card.done .appointment-time {
+  color: var(--color-success);
+}
+
+.appointment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.appointment-customer {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appointment-service {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.appointment-contact {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  margin-top: 2px;
+}
+
+.appointment-actions {
+  display: flex;
+  align-items: center;
+}
+
+.btn-action {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
+.btn-whatsapp {
+  background: #25D366 !important;
+  border-color: #25D366 !important;
+  color: white !important;
+}
+
+.btn-whatsapp:hover {
+  background: #1da851 !important;
+  border-color: #1da851 !important;
+}
+
+.status-pill {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.status-pill.status-done {
+  background: rgba(0, 184, 148, 0.2);
+  color: var(--color-success);
+}
+
+.status-pill.status-cancelled {
+  background: rgba(214, 48, 49, 0.2);
+  color: var(--color-error);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-secondary);
+}
+
+/* Footer */
+.barber-footer {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.refresh-note {
+  margin-top: var(--spacing-xs);
+  opacity: 0.7;
+}
+
+/* Buttons */
+.btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+
+/* Responsive - ya es mobile first */
+@media (min-width: 500px) {
+  .barber-page {
+    padding: var(--spacing-lg);
+  }
+}

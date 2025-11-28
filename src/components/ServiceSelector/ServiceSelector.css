@@ -1,0 +1,111 @@
+.service-selector {
+  width: 100%;
+}
+
+.service-selector-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.service-selector-loading {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.service-options {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.service-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  background: linear-gradient(145deg, var(--bg-secondary), rgba(26, 26, 46, 0.8));
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  text-align: left;
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.service-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--color-accent);
+  transform: scaleY(0);
+  transition: var(--transition-normal);
+}
+
+.service-option:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: linear-gradient(145deg, rgba(233, 69, 96, 0.1), rgba(26, 26, 46, 0.9));
+  transform: translateX(5px);
+}
+
+.service-option:hover:not(:disabled)::before {
+  transform: scaleY(1);
+}
+
+.service-option.selected {
+  border-color: var(--color-accent);
+  background: linear-gradient(145deg, rgba(233, 69, 96, 0.2), rgba(233, 69, 96, 0.1));
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+}
+
+.service-option.selected::before {
+  transform: scaleY(1);
+}
+
+.service-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.service-name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.service-details {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.service-duration {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.service-price {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.service-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .service-option {
+    padding: var(--spacing-md);
+  }
+
+  .service-name {
+    font-size: var(--font-size-md);
+  }
+}
