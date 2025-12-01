@@ -85,7 +85,6 @@ export function BookingPage() {
   const handleCustomerChange = (data: {
     customer_name: string;
     phone: string;
-    email: string;
     notes?: string;
   }) => {
     setFormData((prev) => ({
@@ -245,7 +244,6 @@ export function BookingPage() {
             value={{
               customer_name: formData.customer_name,
               phone: formData.phone,
-              email: formData.email,
               notes: formData.notes,
             }}
             onChange={handleCustomerChange}

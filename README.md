@@ -179,8 +179,8 @@ Editar `src/styles/globals.css`:
 
 ```css
 :root {
-  --color-primary: #1a1a2e;
-  --color-accent: #e94560;
+  --color-primary: #4a4a4a;
+  --color-accent: #d4af37;
   /* ... */
 }
 ```

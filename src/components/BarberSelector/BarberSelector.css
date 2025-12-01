@@ -27,7 +27,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(145deg, var(--bg-secondary), rgba(26, 26, 46, 0.8));
+  background: linear-gradient(145deg, var(--bg-secondary), rgba(58, 58, 58, 0.8));
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-lg);
   transition: var(--transition-normal);
@@ -36,15 +36,15 @@
 
 .barber-option:hover:not(:disabled) {
   border-color: var(--color-accent);
-  background: linear-gradient(145deg, rgba(233, 69, 96, 0.15), rgba(26, 26, 46, 0.9));
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(58, 58, 58, 0.9));
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 .barber-option.selected {
   border-color: var(--color-accent);
-  background: linear-gradient(145deg, rgba(233, 69, 96, 0.25), rgba(233, 69, 96, 0.15));
-  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.15));
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
 }
 
 .barber-option:disabled {
@@ -63,7 +63,7 @@
   border-radius: 50%;
   font-weight: 700;
   font-size: var(--font-size-lg);
-  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
   transition: var(--transition-normal);
 }
 

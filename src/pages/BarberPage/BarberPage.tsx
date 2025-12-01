@@ -35,7 +35,7 @@ export function BarberPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-    }, 30000);
+    }, 20000);
     return () => clearInterval(interval);
   }, [refetch]);
 

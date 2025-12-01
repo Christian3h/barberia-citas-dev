@@ -26,7 +26,7 @@
   align-items: flex-start;
   gap: var(--spacing-xs);
   padding: var(--spacing-lg);
-  background: linear-gradient(145deg, var(--bg-secondary), rgba(26, 26, 46, 0.8));
+  background: linear-gradient(145deg, var(--bg-secondary), rgba(58, 58, 58, 0.8));
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-lg);
   text-align: left;
@@ -49,7 +49,7 @@
 
 .service-option:hover:not(:disabled) {
   border-color: var(--color-accent);
-  background: linear-gradient(145deg, rgba(233, 69, 96, 0.1), rgba(26, 26, 46, 0.9));
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(58, 58, 58, 0.9));
   transform: translateX(5px);
 }
 
@@ -59,8 +59,8 @@
 
 .service-option.selected {
   border-color: var(--color-accent);
-  background: linear-gradient(145deg, rgba(233, 69, 96, 0.2), rgba(233, 69, 96, 0.1));
-  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
 }
 
 .service-option.selected::before {

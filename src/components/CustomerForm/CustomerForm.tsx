@@ -8,7 +8,6 @@ import './CustomerForm.css';
 interface CustomerData {
   customer_name: string;
   phone: string;
-  email: string;
   notes?: string;
 }
 
@@ -55,19 +54,6 @@ export function CustomerForm({
           placeholder="300 123 4567"
           value={value.phone}
           onChange={(e) => handleChange('phone', e.target.value)}
-          disabled={disabled}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="email">Correo electrónico *</label>
-        <input
-          type="email"
-          id="email"
-          placeholder="tu@email.com"
-          value={value.email}
-          onChange={(e) => handleChange('email', e.target.value)}
           disabled={disabled}
           required
         />

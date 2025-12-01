@@ -596,7 +596,7 @@
   }
 
   .nav-tab.active {
-    background: rgba(233, 69, 96, 0.2);
+    background: rgba(212, 175, 55, 0.2);
     color: var(--color-accent);
   }
 
