@@ -25,7 +25,6 @@ interface BookingFormData {
   duration_min: number;
   customer_name: string;
   phone: string;
-  email: string;
   notes: string;
 }
 
@@ -37,7 +36,6 @@ const initialFormData: BookingFormData = {
   duration_min: 30,
   customer_name: '',
   phone: '',
-  email: '',
   notes: '',
 };
 
@@ -100,8 +98,7 @@ export function BookingPage() {
       formData.date &&
       formData.time &&
       formData.customer_name.trim().length >= 2 &&
-      formData.phone.replace(/\D/g, '').length >= 7 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      formData.phone.replace(/\D/g, '').length >= 7
     );
   };
 
@@ -141,7 +138,7 @@ export function BookingPage() {
         duration_min: formData.duration_min,
         customer_name: formData.customer_name,
         phone: formData.phone,
-        email: formData.email,
+        email: '',
         service: formData.service,
         barber_id: formData.barber_id,
         notes: formData.notes || undefined,
@@ -170,7 +167,7 @@ export function BookingPage() {
           <div className="success-icon">✓</div>
           <h2>¡Cita Agendada!</h2>
           <p>Tu cita ha sido confirmada exitosamente.</p>
-          <p>Recibirás un recordatorio por correo electrónico.</p>
+          <p>Te enviaremos un recordatorio por WhatsApp.</p>
           <button
             className="btn btn-primary"
             onClick={() => setBookingSuccess(false)}

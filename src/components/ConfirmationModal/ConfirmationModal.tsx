@@ -14,7 +14,7 @@ interface AppointmentSummary {
   barber_id: string;
   customer_name: string;
   phone: string;
-  email: string;
+  email?: string;
   notes?: string;
 }
 
@@ -84,11 +84,6 @@ export function ConfirmationModal({
           <div className="summary-row">
             <span className="summary-label">📱 Teléfono:</span>
             <span className="summary-value">{appointment.phone}</span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">✉️ Email:</span>
-            <span className="summary-value">{appointment.email}</span>
           </div>
 
           {appointment.notes && (
