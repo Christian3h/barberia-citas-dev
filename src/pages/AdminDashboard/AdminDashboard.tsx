@@ -89,7 +89,7 @@ export function AdminDashboard() {
   const { appointments: allAppointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({});
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
   const { barbers, refetch: refetchBarbers } = useBarbers();
-  const { services, refetch: refetchServices } = useServices();
+  const { allServices, refetch: refetchServices } = useServices();
 
   // Filtrar citas por fecha seleccionada para la tabla de citas
   const appointments = allAppointments.filter(apt => apt.date === selectedDate);
@@ -154,7 +154,7 @@ export function AdminDashboard() {
       .filter(a => a.status === 'done')
       .reduce((sum, a) => {
         // Buscar servicio por nombre o ID
-        const service = services.find(s => s.name === a.service || s.id === a.service);
+        const service = allServices.find(s => s.name === a.service || s.id === a.service);
         return sum + (service?.price || 0);
       }, 0);
 
@@ -673,7 +673,7 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {services.map((service) => (
+              {allServices.map((service) => (
                 <tr key={service.id} className={(service.active ?? true) ? '' : 'row-inactive'}>
                   <td>
                     <div className="service-info">
