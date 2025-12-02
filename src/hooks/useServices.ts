@@ -14,10 +14,11 @@ interface UseServicesReturn {
   refetch: () => Promise<void>;
   getServiceById: (id: string) => BarberService | undefined;
   getServiceDuration: (id: string) => number;
+  allServices: BarberService[]; // Incluye servicios inactivos (para admin)
 }
 
 export function useServices(): UseServicesReturn {
-  const [services, setServices] = useState<BarberService[]>([]);
+  const [allServices, setAllServices] = useState<BarberService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +28,7 @@ export function useServices(): UseServicesReturn {
 
     try {
       const data = await googleSheetsService.getServices();
-      setServices(data);
+      setAllServices(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar servicios');
     } finally {
@@ -39,14 +40,17 @@ export function useServices(): UseServicesReturn {
     fetchServices();
   }, [fetchServices]);
 
+  // Filtrar solo servicios activos para la vista pública
+  const services = allServices.filter((s) => s.active !== false);
+
   const getServiceById = useCallback((id: string) => {
-    return services.find((s) => s.id === id);
-  }, [services]);
+    return allServices.find((s) => s.id === id);
+  }, [allServices]);
 
   const getServiceDuration = useCallback((id: string) => {
-    const service = services.find((s) => s.id === id);
+    const service = allServices.find((s) => s.id === id);
     return service?.duration_min || 30;
-  }, [services]);
+  }, [allServices]);
 
   return {
     services,
@@ -55,6 +59,7 @@ export function useServices(): UseServicesReturn {
     refetch: fetchServices,
     getServiceById,
     getServiceDuration,
+    allServices,
   };
 }
 

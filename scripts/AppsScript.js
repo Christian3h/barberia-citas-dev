@@ -403,19 +403,143 @@ function testPurge() {
 
 /**
  * Endpoint GET para integración con frontend
+ * Maneja tanto queries simples como payloads complejos
  */
 function doGet(e) {
-  const action = e.parameter.action;
+  try {
+    // Si hay un payload, procesarlo como si fuera POST
+    if (e.parameter.payload) {
+      const data = JSON.parse(decodeURIComponent(e.parameter.payload));
+      return processRequest(data);
+    }
+
+    // Queries simples
+    const action = e.parameter.action;
+    switch (action) {
+      case 'appointments':
+        return getAppointmentsJSON(e);
+      case 'slots':
+        return getAvailableSlotsJSON(e);
+      default:
+        return ContentService.createTextOutput(JSON.stringify({ error: 'Invalid action' }))
+          .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Procesa una petición de datos (usado por GET y POST)
+ */
+function processRequest(data) {
+  const action = data.action;
+  const sheet = data.sheet; // Nombre de la hoja para operaciones genéricas
+
+  let result;
 
   switch (action) {
-    case 'appointments':
-      return getAppointmentsJSON(e);
-    case 'slots':
-      return getAvailableSlotsJSON(e);
+    // ============================================
+    // OPERACIONES GENÉRICAS (cualquier tabla)
+    // ============================================
+    case 'insert':
+      result = insertRow(sheet, data.data, data.autoId !== false);
+      break;
+    case 'update':
+      result = updateRow(sheet, data.id, data.data);
+      break;
+    case 'delete':
+      result = deleteRow(sheet, data.id);
+      break;
+    case 'getAll':
+      result = getAll(sheet, data.filters || {});
+      break;
+    case 'getById':
+      result = getById(sheet, data.id);
+      break;
+
+    // ============================================
+    // OPERACIONES ESPECÍFICAS (compatibilidad)
+    // ============================================
+    case 'createAppointment':
+      result = createAppointment(data);
+      break;
+    case 'updateAppointmentStatus':
+      result = updateAppointmentStatus(data.id, data.status);
+      break;
+    case 'createUnavailable':
+      result = createUnavailableBlock(data);
+      break;
+    case 'deleteUnavailable':
+      result = deleteUnavailableBlock(data.id);
+      break;
+    case 'updateSetting':
+      result = updateSettingValue(data.key, data.value);
+      break;
+
+    // ============================================
+    // OPERACIONES DE SERVICIOS
+    // ============================================
+    case 'createService':
+      // Extraer solo los campos del servicio (sin 'action')
+      const serviceData = {
+        name: data.name,
+        duration_min: data.duration_min,
+        price: data.price,
+        description: data.description || '',
+        active: data.active !== undefined ? data.active : true
+      };
+      result = insertRow(CONFIG.SERVICES_SHEET, serviceData);
+      break;
+    case 'updateService':
+      // Extraer solo los campos a actualizar (sin 'action' ni 'id')
+      const updateData = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.duration_min !== undefined) updateData.duration_min = data.duration_min;
+      if (data.price !== undefined) updateData.price = data.price;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.active !== undefined) updateData.active = data.active;
+      result = updateRow(CONFIG.SERVICES_SHEET, data.id, updateData);
+      break;
+    case 'deleteService':
+      result = deleteRow(CONFIG.SERVICES_SHEET, data.id);
+      break;
+
+    // ============================================
+    // OPERACIONES DE USUARIOS/BARBEROS
+    // ============================================
+    case 'createUser':
+      // Extraer solo los campos del usuario (sin 'action')
+      const userData = {
+        name: data.name,
+        email: data.email || '',
+        phone: data.phone || '',
+        role: data.role || 'barber',
+        active: data.active !== undefined ? data.active : true
+      };
+      result = insertRow(CONFIG.USERS_SHEET, userData);
+      break;
+    case 'updateUser':
+      // Extraer solo los campos a actualizar (sin 'action' ni 'id')
+      const userUpdateData = {};
+      if (data.name !== undefined) userUpdateData.name = data.name;
+      if (data.email !== undefined) userUpdateData.email = data.email;
+      if (data.phone !== undefined) userUpdateData.phone = data.phone;
+      if (data.role !== undefined) userUpdateData.role = data.role;
+      if (data.active !== undefined) userUpdateData.active = data.active;
+      result = updateRow(CONFIG.USERS_SHEET, data.id, userUpdateData);
+      break;
+    case 'deleteUser':
+      result = deleteRow(CONFIG.USERS_SHEET, data.id);
+      break;
+
     default:
-      return ContentService.createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-        .setMimeType(ContentService.MimeType.JSON);
+      result = { error: 'Acción no válida: ' + action };
   }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
@@ -424,82 +548,7 @@ function doGet(e) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const action = data.action;
-    const sheet = data.sheet; // Nombre de la hoja para operaciones genéricas
-
-    let result;
-
-    switch (action) {
-      // ============================================
-      // OPERACIONES GENÉRICAS (cualquier tabla)
-      // ============================================
-      case 'insert':
-        result = insertRow(sheet, data.data, data.autoId !== false);
-        break;
-      case 'update':
-        result = updateRow(sheet, data.id, data.data);
-        break;
-      case 'delete':
-        result = deleteRow(sheet, data.id);
-        break;
-      case 'getAll':
-        result = getAll(sheet, data.filters || {});
-        break;
-      case 'getById':
-        result = getById(sheet, data.id);
-        break;
-
-      // ============================================
-      // OPERACIONES ESPECÍFICAS (compatibilidad)
-      // ============================================
-      case 'createAppointment':
-        result = createAppointment(data);
-        break;
-      case 'updateAppointmentStatus':
-        result = updateAppointmentStatus(data.id, data.status);
-        break;
-      case 'createUnavailable':
-        result = createUnavailableBlock(data);
-        break;
-      case 'deleteUnavailable':
-        result = deleteUnavailableBlock(data.id);
-        break;
-      case 'updateSetting':
-        result = updateSettingValue(data.key, data.value);
-        break;
-
-      // ============================================
-      // OPERACIONES DE SERVICIOS
-      // ============================================
-      case 'createService':
-        result = insertRow(CONFIG.SERVICES_SHEET, data);
-        break;
-      case 'updateService':
-        result = updateRow(CONFIG.SERVICES_SHEET, data.id, data);
-        break;
-      case 'deleteService':
-        result = deleteRow(CONFIG.SERVICES_SHEET, data.id);
-        break;
-
-      // ============================================
-      // OPERACIONES DE USUARIOS/BARBEROS
-      // ============================================
-      case 'createUser':
-        result = insertRow(CONFIG.USERS_SHEET, data);
-        break;
-      case 'updateUser':
-        result = updateRow(CONFIG.USERS_SHEET, data.id, data);
-        break;
-      case 'deleteUser':
-        result = deleteRow(CONFIG.USERS_SHEET, data.id);
-        break;
-
-      default:
-        result = { error: 'Acción no válida: ' + action };
-    }
-
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
+    return processRequest(data);
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
       .setMimeType(ContentService.MimeType.JSON);

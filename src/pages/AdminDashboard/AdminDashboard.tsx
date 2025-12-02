@@ -89,7 +89,7 @@ export function AdminDashboard() {
   const { appointments: allAppointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({});
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
   const { barbers, refetch: refetchBarbers } = useBarbers();
-  const { services, refetch: refetchServices } = useServices();
+  const { allServices, refetch: refetchServices } = useServices();
 
   // Filtrar citas por fecha seleccionada para la tabla de citas
   const appointments = allAppointments.filter(apt => apt.date === selectedDate);
@@ -154,7 +154,7 @@ export function AdminDashboard() {
       .filter(a => a.status === 'done')
       .reduce((sum, a) => {
         // Buscar servicio por nombre o ID
-        const service = services.find(s => s.name === a.service || s.id === a.service);
+        const service = allServices.find(s => s.name === a.service || s.id === a.service);
         return sum + (service?.price || 0);
       }, 0);
 
@@ -509,6 +509,7 @@ export function AdminDashboard() {
   const ServicesManager = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingService, setEditingService] = useState<BarberService | null>(null);
+    const [deletingService, setDeletingService] = useState<BarberService | null>(null);
     const [formData, setFormData] = useState({
       name: '',
       duration_min: 30,
@@ -537,19 +538,49 @@ export function AdminDashboard() {
       setShowForm(true);
     };
 
+    const handleDeleteClick = (service: BarberService) => {
+      setDeletingService(service);
+    };
+
+    const confirmDelete = async () => {
+      if (!deletingService) return;
+      
+      setSaving(true);
+      try {
+        const result = await appsScriptApi.deleteService(deletingService.id);
+        if (result.success) {
+          refetchServices();
+          setDeletingService(null);
+        } else {
+          alert('Error: ' + (result.error || 'No se pudo eliminar el servicio'));
+        }
+      } catch (err) {
+        console.error('Error deleting service:', err);
+        alert('Error al eliminar el servicio');
+      }
+      setSaving(false);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setSaving(true);
       try {
+        let result;
         if (editingService) {
-          await appsScriptApi.updateService(editingService.id, formData);
+          result = await appsScriptApi.updateService(editingService.id, formData);
         } else {
-          await appsScriptApi.createService(formData as Omit<BarberService, 'id'>);
+          result = await appsScriptApi.createService(formData as Omit<BarberService, 'id'>);
         }
-        resetForm();
-        refetchServices();
+        
+        if (result.success) {
+          resetForm();
+          refetchServices();
+        } else {
+          alert('Error: ' + (result.error || 'No se pudo guardar el servicio'));
+        }
       } catch (err) {
         console.error('Error saving service:', err);
+        alert('Error al guardar el servicio');
       }
       setSaving(false);
     };
@@ -557,8 +588,15 @@ export function AdminDashboard() {
     const toggleActive = async (service: BarberService) => {
       setTogglingId(service.id);
       try {
-        await appsScriptApi.updateService(service.id, { active: !(service.active ?? true) });
-        refetchServices();
+        const result = await appsScriptApi.updateService(service.id, { active: !(service.active ?? true) });
+        if (result.success) {
+          refetchServices();
+        } else {
+          alert('Error: ' + (result.error || 'No se pudo cambiar el estado'));
+        }
+      } catch (err) {
+        console.error('Error toggling service:', err);
+        alert('Error al cambiar el estado del servicio');
       } finally {
         setTogglingId(null);
       }
@@ -635,7 +673,7 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {services.map((service) => (
+              {allServices.map((service) => (
                 <tr key={service.id} className={(service.active ?? true) ? '' : 'row-inactive'}>
                   <td>
                     <div className="service-info">
@@ -655,8 +693,11 @@ export function AdminDashboard() {
                     </button>
                   </td>
                   <td className="actions-cell">
-                    <button className="btn btn-small btn-secondary" onClick={() => handleEdit(service)}>
+                    <button className="btn btn-small btn-secondary" onClick={() => handleEdit(service)} title="Editar">
                       ✏️
+                    </button>
+                    <button className="btn btn-small btn-danger" onClick={() => handleDeleteClick(service)} title="Eliminar" style={{ marginLeft: '8px' }}>
+                      🗑️
                     </button>
                   </td>
                 </tr>
@@ -664,6 +705,33 @@ export function AdminDashboard() {
             </tbody>
           </table>
         </div>
+
+        {deletingService && (
+          <div className="modal-overlay" onClick={() => !saving && setDeletingService(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">Eliminar Servicio</h2>
+              <p>¿Estás seguro de que deseas eliminar el servicio <strong>{deletingService.name}</strong>?</p>
+              <p className="text-warning">Esta acción no se puede deshacer y el servicio dejará de estar disponible inmediatamente.</p>
+              
+              <div className="modal-actions">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setDeletingService(null)}
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={confirmDelete}
+                  disabled={saving}
+                >
+                  {saving ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
