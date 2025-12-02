@@ -65,6 +65,7 @@ async function fetchAppsScript<T>(
       };
     }
 
+    // Si el resultado tiene un campo 'error', es un error
     if (result.error) {
       return {
         success: false,
@@ -72,6 +73,23 @@ async function fetchAppsScript<T>(
       };
     }
 
+    // Si el resultado tiene 'success: false', es un error
+    if (result.success === false) {
+      return {
+        success: false,
+        error: result.error || 'Error desconocido',
+      };
+    }
+
+    // Si el resultado tiene 'success: true', devolver los datos directamente
+    if (result.success === true) {
+      return {
+        success: true,
+        data: result as T,
+      };
+    }
+
+    // Si no tiene campo 'success', asumir que es exitoso
     return {
       success: true,
       data: result as T,
@@ -202,8 +220,13 @@ export async function createService(
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
   const result = await fetchAppsScript<{ success: boolean; id: string }>({
     action: 'createService',
-    ...data,
+    name: data.name,
+    duration_min: data.duration_min,
+    price: data.price,
+    description: data.description || '',
+    active: data.active !== undefined ? data.active : true,
   });
+  
   if (result.success) {
     invalidateServicesCache();
   }
@@ -217,11 +240,16 @@ export async function updateService(
   id: string,
   data: Partial<BarberService>
 ): Promise<ApiResponse<{ success: boolean }>> {
-  const result = await fetchAppsScript<{ success: boolean }>({
-    action: 'updateService',
-    id,
-    ...data,
-  });
+  // Filtrar campos undefined para no enviarlos
+  const payload: Record<string, unknown> = { action: 'updateService', id };
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.duration_min !== undefined) payload.duration_min = data.duration_min;
+  if (data.price !== undefined) payload.price = data.price;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.active !== undefined) payload.active = data.active;
+  
+  const result = await fetchAppsScript<{ success: boolean }>(payload);
+  
   if (result.success) {
     invalidateServicesCache();
   }
@@ -238,6 +266,7 @@ export async function deleteService(
     action: 'deleteService',
     id,
   });
+  
   if (result.success) {
     invalidateServicesCache();
   }
