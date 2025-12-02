@@ -88,7 +88,7 @@ export function AdminDashboard() {
   // Cargar todas las citas para el Dashboard, luego filtrar por fecha seleccionada en la tabla
   const { appointments: allAppointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({});
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
-  const { barbers, refetch: refetchBarbers } = useBarbers();
+  const { barbers, refetch: refetchBarbers } = useBarbers({ includeInactive: true });
   const { allServices, refetch: refetchServices } = useServices();
 
   // Filtrar citas por fecha seleccionada para la tabla de citas
@@ -742,6 +742,7 @@ export function AdminDashboard() {
   const BarbersManager = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingBarber, setEditingBarber] = useState<User | null>(null);
+    const [deletingBarber, setDeletingBarber] = useState<User | null>(null);
     const [formData, setFormData] = useState({
       name: '',
       email: '',
@@ -792,6 +793,22 @@ export function AdminDashboard() {
         refetchBarbers();
       } finally {
         setTogglingId(null);
+      }
+    };
+
+    const confirmDelete = async () => {
+      if (!deletingBarber) return;
+      
+      setSaving(true);
+      try {
+        await appsScriptApi.deleteUser(deletingBarber.id);
+        setDeletingBarber(null);
+        refetchBarbers();
+      } catch (err) {
+        console.error('Error deleting barber:', err);
+        alert('Error al eliminar el barbero. Por favor intenta de nuevo.');
+      } finally {
+        setSaving(false);
       }
     };
 
@@ -887,12 +904,46 @@ export function AdminDashboard() {
                     >
                       🔗
                     </button>
+                    <button
+                      className="btn btn-small btn-danger"
+                      onClick={() => setDeletingBarber(barber)}
+                      title="Eliminar barbero"
+                    >
+                      🗑️
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {deletingBarber && (
+          <div className="modal-overlay" onClick={() => !saving && setDeletingBarber(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">Eliminar Barbero</h2>
+              <p>¿Estás seguro de que deseas eliminar a <strong>{deletingBarber.name}</strong>?</p>
+              <p className="text-warning">Esta acción no se puede deshacer y el barbero dejará de estar disponible inmediatamente en todas las páginas.</p>
+              
+              <div className="modal-actions">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setDeletingBarber(null)}
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={confirmDelete}
+                  disabled={saving}
+                >
+                  {saving ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

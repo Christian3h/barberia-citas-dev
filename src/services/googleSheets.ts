@@ -205,6 +205,14 @@ export async function getUsers(): Promise<User[]> {
 }
 
 /**
+ * Obtiene todos los barberos (activos e inactivos)
+ */
+export async function getAllBarbers(): Promise<User[]> {
+  const users = await getUsers();
+  return users.filter((user) => user.role === 'barber');
+}
+
+/**
  * Obtiene barberos activos
  */
 export async function getBarbers(): Promise<User[]> {
@@ -381,6 +389,7 @@ export const googleSheetsService = {
   getScheduledAppointments,
   getAppointmentById,
   getUsers,
+  getAllBarbers,
   getBarbers,
   getUserById,
   getUnavailable,
