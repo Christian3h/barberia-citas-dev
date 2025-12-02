@@ -15,7 +15,12 @@ interface UseBarbersReturn {
   getBarberById: (id: string) => User | undefined;
 }
 
-export function useBarbers(): UseBarbersReturn {
+interface UseBarbersOptions {
+  includeInactive?: boolean;
+}
+
+export function useBarbers(options: UseBarbersOptions = {}): UseBarbersReturn {
+  const { includeInactive = false } = options;
   const [barbers, setBarbers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +30,16 @@ export function useBarbers(): UseBarbersReturn {
     setError(null);
 
     try {
-      const data = await googleSheetsService.getBarbers();
+      const data = includeInactive 
+        ? await googleSheetsService.getAllBarbers()
+        : await googleSheetsService.getBarbers();
       setBarbers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar barberos');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [includeInactive]);
 
   useEffect(() => {
     fetchBarbers();

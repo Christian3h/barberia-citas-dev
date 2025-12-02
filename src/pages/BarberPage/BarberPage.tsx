@@ -19,7 +19,7 @@ export function BarberPage() {
   );
   const [completingId, setCompletingId] = useState<string | null>(null);
 
-  const { barbers, loading: loadingBarbers } = useBarbers();
+  const { barbers, loading: loadingBarbers } = useBarbers({ includeInactive: true });
   const { services } = useServices();
   const {
     appointments,
@@ -58,6 +58,21 @@ export function BarberPage() {
           <div className="error-icon">😕</div>
           <h2>Barbero no encontrado</h2>
           <p>El enlace que usaste no es válido o el barbero no existe.</p>
+          <Link to="/" className="btn btn-primary">
+            Ir al inicio
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!barber.active) {
+    return (
+      <div className="barber-page">
+        <div className="error-screen">
+          <div className="error-icon">🚫</div>
+          <h2>Barbero no disponible</h2>
+          <p>Este barbero ya no está disponible para agendar citas.</p>
           <Link to="/" className="btn btn-primary">
             Ir al inicio
           </Link>
