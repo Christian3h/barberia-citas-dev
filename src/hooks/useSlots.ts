@@ -76,11 +76,12 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
     }
   }, [date, barber_id, duration_min]);
 
+  // Effect para refetch automático cuando cambian los parámetros
   useEffect(() => {
     if (autoFetch && date && barber_id) {
       fetchAvailableSlots();
     }
-  }, [autoFetch, date, barber_id, fetchAvailableSlots]);
+  }, [autoFetch, date, barber_id, duration_min, fetchAvailableSlots]);
 
   // Polling para refrescar slots periódicamente
   useEffect(() => {

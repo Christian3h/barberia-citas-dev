@@ -89,7 +89,13 @@ export function generateTimeSlots(
 }
 
 /**
- * Verifica si un slot de tiempo colisiona con un rango
+ * Verifica si un slot de tiempo colisiona con un rango ocupado
+ * 
+ * Ejemplo: Si hay una cita de 9:00 a 9:30 (rango ocupado),
+ * - Slot 8:45 con duración 15min (termina 9:00) → NO colisiona (termina justo cuando empieza la cita)
+ * - Slot 9:00 con duración 15min (termina 9:15) → SÍ colisiona (empieza durante la cita)
+ * - Slot 9:15 con duración 15min (termina 9:30) → SÍ colisiona (está dentro de la cita)
+ * - Slot 9:30 con duración 15min (termina 9:45) → NO colisiona (empieza justo cuando termina la cita)
  */
 export function timeSlotCollides(
   slotTime: string,
@@ -103,8 +109,15 @@ export function timeSlotCollides(
   const rStart = parseTime(rangeStart, baseDate);
   const rEnd = parseTime(rangeEnd, baseDate);
 
-  // Colisión si: slotStart < rangeEnd AND slotEnd > rangeStart
-  return isBefore(slotStart, rEnd) && isAfter(slotEnd, rStart);
+  // Colisión si hay superposición:
+  // El slot empieza antes de que termine el rango Y el slot termina después de que empiece el rango
+  // Usamos < y > (no <= y >=) para permitir citas consecutivas
+  const slotStartMs = slotStart.getTime();
+  const slotEndMs = slotEnd.getTime();
+  const rangeStartMs = rStart.getTime();
+  const rangeEndMs = rEnd.getTime();
+  
+  return slotStartMs < rangeEndMs && slotEndMs > rangeStartMs;
 }
 
 /**

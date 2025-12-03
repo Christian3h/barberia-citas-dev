@@ -207,7 +207,58 @@ function updateSetting(key, value) {
 // APPOINTMENTS - Citas
 // ============================================
 
+/**
+ * Obtiene la duración de un servicio desde la tabla Services
+ */
+function getServiceDuration(serviceId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Services');
+  
+  if (!sheet) {
+    return 30; // Valor por defecto si no existe la hoja
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return 30;
+  }
+  
+  const headers = data[0];
+  const idCol = headers.indexOf('id');
+  const durationCol = headers.indexOf('duration_min');
+  
+  if (idCol === -1 || durationCol === -1) {
+    return 30;
+  }
+  
+  // Buscar el servicio por ID o por nombre
+  for (let i = 1; i < data.length; i++) {
+    const rowId = String(data[i][idCol]).trim();
+    if (rowId === String(serviceId).trim()) {
+      const duration = parseInt(data[i][durationCol]);
+      return isNaN(duration) || duration <= 0 ? 30 : duration;
+    }
+  }
+  
+  // Si no encontró por ID, buscar por nombre en la columna 'name'
+  const nameCol = headers.indexOf('name');
+  if (nameCol !== -1) {
+    for (let i = 1; i < data.length; i++) {
+      const rowName = String(data[i][nameCol]).trim().toLowerCase();
+      if (rowName === String(serviceId).trim().toLowerCase()) {
+        const duration = parseInt(data[i][durationCol]);
+        return isNaN(duration) || duration <= 0 ? 30 : duration;
+      }
+    }
+  }
+  
+  return 30; // Valor por defecto
+}
+
 function createAppointment(data) {
+  // Obtener la duración del servicio desde la tabla Services
+  const serviceDuration = getServiceDuration(data.service);
+  
   const appointmentData = {
     barber_id: data.barber_id,
     customer_name: data.customer_name,
@@ -215,7 +266,7 @@ function createAppointment(data) {
     service: data.service,
     date: data.date,
     time: data.time,
-    duration_min: data.duration_min || 30,
+    duration_min: serviceDuration,
     datetime_iso: new Date(`${data.date}T${data.time}`).toISOString(),
     status: 'scheduled',
     notes: data.notes || ''

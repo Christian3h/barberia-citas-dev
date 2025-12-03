@@ -14,7 +14,7 @@ import {
 } from '@/components';
 import { useAppointments } from '@/hooks';
 import { googleSheetsService } from '@/services';
-import { formatDisplayDate } from '@/utils';
+import { formatDisplayDate, timeSlotCollides, calculateEndTime } from '@/utils';
 import './BookingPage.css';
 
 interface BookingFormData {
@@ -142,14 +142,24 @@ export function BookingPage() {
     setBookingError(null);
 
     try {
-      // Verificar disponibilidad antes de crear la cita
+      // Verificar disponibilidad antes de crear la cita (considerando duración del servicio)
       const existingAppointments = await googleSheetsService.getAppointmentsByDate(formData.date);
-      const conflictingAppointment = existingAppointments.find(
-        (apt) =>
-          apt.barber_id === formData.barber_id &&
-          apt.time === formData.time &&
-          apt.status === 'scheduled'
-      );
+      
+      // Buscar conflictos considerando la duración de ambos servicios
+      const conflictingAppointment = existingAppointments.find((apt) => {
+        if (apt.barber_id !== formData.barber_id || apt.status !== 'scheduled') {
+          return false;
+        }
+        
+        // Calcular duración de la cita existente
+        const aptDuration = (typeof apt.duration_min === 'number' && apt.duration_min > 0) 
+          ? apt.duration_min 
+          : 30;
+        const aptEnd = calculateEndTime(apt.time, aptDuration);
+        
+        // Verificar si hay colisión
+        return timeSlotCollides(formData.time, formData.duration_min, apt.time, aptEnd);
+      });
 
       if (conflictingAppointment) {
         setShowConfirmation(false);
