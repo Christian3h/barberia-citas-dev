@@ -40,7 +40,7 @@ export function getAvailableSlots(
     business_start,
     business_end,
     slot_interval_min,
-    min_advance_hours = 1,  // Default: 1 hora de anticipación
+    min_advance_hours = 0,  // Default: 0 horas de anticipación (permite agendar de inmediato)
   } = settings;
 
   // 1. Generar todos los slots del día

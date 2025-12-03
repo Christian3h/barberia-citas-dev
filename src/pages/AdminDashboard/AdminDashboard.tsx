@@ -1086,13 +1086,13 @@ export function AdminDashboard() {
                   <input
                     type="number"
                     min="0"
-                    max="24"
+                    max="2"
                     step="0.5"
-                    value={editedSettings.min_advance_hours || 1}
-                    onChange={(e) => setEditedSettings({ ...editedSettings, min_advance_hours: parseFloat(e.target.value) || 1 })}
+                    value={editedSettings.min_advance_hours ?? 0}
+                    onChange={(e) => setEditedSettings({ ...editedSettings, min_advance_hours: parseFloat(e.target.value) || 0 })}
                   />
                   <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    Tiempo mínimo antes de una cita para el mismo día
+                    Tiempo mínimo antes de una cita para el mismo día (0-2 horas)
                   </small>
                 </div>
               </div>
