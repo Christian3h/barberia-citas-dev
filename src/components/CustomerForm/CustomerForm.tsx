@@ -28,12 +28,12 @@ interface CustomerFormProps {
 function validateColombianPhone(phone: string): { valid: boolean; error: string } {
   // Limpiar el número de espacios, guiones y paréntesis
   const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
-  
+
   // Si está vacío
   if (!cleanPhone) {
     return { valid: false, error: 'El teléfono es requerido' };
   }
-  
+
   // Verificar si tiene código de país +57 o 57
   let numberWithoutCountry = cleanPhone;
   if (cleanPhone.startsWith('+57')) {
@@ -41,47 +41,28 @@ function validateColombianPhone(phone: string): { valid: boolean; error: string 
   } else if (cleanPhone.startsWith('57') && cleanPhone.length > 10) {
     numberWithoutCountry = cleanPhone.slice(2);
   }
-  
+
   // Debe tener exactamente 10 dígitos
   if (!/^\d{10}$/.test(numberWithoutCountry)) {
     return { valid: false, error: 'El número debe tener 10 dígitos' };
   }
-  
+
   // Celulares colombianos comienzan con 3
   if (!numberWithoutCountry.startsWith('3')) {
     return { valid: false, error: 'Los celulares colombianos comienzan con 3' };
   }
-  
+
   // Validar prefijos de operadores colombianos válidos (30x, 31x, 32x, 33x, 35x)
   const prefix = numberWithoutCountry.substring(0, 3);
   const validPrefixes = ['300', '301', '302', '303', '304', '305', '310', '311', '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '322', '323', '324', '325', '350', '351'];
-  
+
   if (!validPrefixes.includes(prefix)) {
     return { valid: false, error: 'Prefijo de operador no válido' };
   }
-  
+
   return { valid: true, error: '' };
 }
 
-/**
- * Formatea el número de teléfono para mostrar
- */
-function formatPhoneDisplay(phone: string): string {
-  const clean = phone.replace(/\D/g, '');
-  
-  // Si tiene código de país, removerlo para el formato
-  let number = clean;
-  if (clean.startsWith('57') && clean.length > 10) {
-    number = clean.slice(2);
-  }
-  
-  // Formato: 300 123 4567
-  if (number.length === 10) {
-    return `${number.slice(0, 3)} ${number.slice(3, 6)} ${number.slice(6)}`;
-  }
-  
-  return phone;
-}
 
 export function CustomerForm({
   value,
