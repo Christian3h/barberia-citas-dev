@@ -12,8 +12,8 @@ class SimpleCache {
   private cache: Map<string, CacheEntry<unknown>> = new Map();
   private pendingRequests: Map<string, Promise<unknown>> = new Map();
 
-  // Tiempo de vida del caché: 30 segundos
-  private readonly TTL = 30 * 1000;
+  // Tiempo de vida del caché: 5 segundos (reducido para evitar conflictos de horarios)
+  private readonly TTL = 5 * 1000;
 
   /**
    * Obtiene datos del caché o ejecuta la función si no existe/expiró

@@ -13,6 +13,8 @@ interface UseSlotsOptions {
   barber_id?: string;
   duration_min?: number;
   autoFetch?: boolean;
+  /** Intervalo de polling en ms. Por defecto 15000 (15s). Usar 0 para desactivar. */
+  pollingInterval?: number;
 }
 
 interface UseSlotsReturn {
@@ -24,7 +26,7 @@ interface UseSlotsReturn {
 }
 
 export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
-  const { date, barber_id, duration_min = 30, autoFetch = false } = options;
+  const { date, barber_id, duration_min = 30, autoFetch = false, pollingInterval = 15000 } = options;
 
   const [slots, setSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,9 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
     setError(null);
 
     try {
+      // Invalidar caché antes de obtener para asegurar datos frescos
+      googleSheetsService.invalidateAppointmentsCache();
+      
       // Obtener datos de Google Sheets
       const [appointments, unavailable, settings] = await Promise.all([
         googleSheetsService.getAppointmentsByDate(fetchParams.date),
@@ -76,6 +81,21 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
       fetchAvailableSlots();
     }
   }, [autoFetch, date, barber_id, fetchAvailableSlots]);
+
+  // Polling para refrescar slots periódicamente
+  useEffect(() => {
+    if (!pollingInterval || pollingInterval <= 0 || !date || !barber_id) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      // Invalidar caché antes de refetch para obtener datos frescos
+      googleSheetsService.invalidateAppointmentsCache();
+      fetchAvailableSlots();
+    }, pollingInterval);
+
+    return () => clearInterval(intervalId);
+  }, [pollingInterval, date, barber_id, fetchAvailableSlots]);
 
   return {
     slots,

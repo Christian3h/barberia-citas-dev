@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Appointment, CreateAppointmentPayload, ApiResponse } from '@/types';
 import { googleSheetsService, appsScriptApi } from '@/services';
+import { cache } from '@/services/cache';
 
 interface UseAppointmentsOptions {
   date?: string;
@@ -75,12 +76,22 @@ export function useAppointments(
 
   const create = useCallback(async (payload: CreateAppointmentPayload) => {
     try {
+      // Invalidar caché antes de crear para asegurar validación con datos frescos
+      cache.invalidate('appointments');
+      
       const response = await appsScriptApi.createAppointment(payload);
+      
+      // Siempre invalidar caché después de intentar crear (éxito o fallo)
+      // Esto asegura que otros usuarios vean los datos actualizados
+      googleSheetsService.invalidateAppointmentsCache();
+      
       if (response.success) {
         await fetchAppointments();
       }
       return response;
     } catch (err) {
+      // Invalidar caché incluso en caso de error
+      googleSheetsService.invalidateAppointmentsCache();
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Error al crear cita',

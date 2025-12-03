@@ -96,7 +96,9 @@ export function getAvailableSlots(
 
     // Verificar colisiones con citas existentes
     const collidesWithAppointment = dayAppointments.some((apt) => {
-      const aptEndTime = calculateEndTime(apt.time, apt.duration_min);
+      // Usar duración de la cita o el intervalo del slot como mínimo
+      const aptDuration = apt.duration_min || slot_interval_min || 30;
+      const aptEndTime = calculateEndTime(apt.time, aptDuration);
       return timeSlotCollides(slotTime, duration_min, apt.time, aptEndTime);
     });
 

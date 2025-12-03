@@ -215,6 +215,7 @@ function createAppointment(data) {
     service: data.service,
     date: data.date,
     time: data.time,
+    duration_min: data.duration_min || 30,
     datetime_iso: new Date(`${data.date}T${data.time}`).toISOString(),
     status: 'scheduled',
     notes: data.notes || ''
