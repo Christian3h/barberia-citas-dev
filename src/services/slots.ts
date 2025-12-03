@@ -14,6 +14,7 @@ import {
   dateIsInRange,
   calculateEndTime,
   parseDate,
+  formatDate,
 } from '@/utils/dateUtils';
 
 
@@ -68,7 +69,11 @@ export function getAvailableSlots(
 
   // 4. Calcular hora mínima si es el día actual
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  // Usar fecha local en vez de UTC para evitar problemas de zona horaria
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
   const isToday = date === todayStr;
 
   let minTime = '00:00';
@@ -175,7 +180,7 @@ export function getNextAvailableSlots(
     // Saltar domingos (opcional, configurable)
     if (checkDate.getDay() === 0) continue;
 
-    const dateStr = checkDate.toISOString().split('T')[0];
+    const dateStr = formatDate(checkDate);
 
     const slots = getAvailableSlots(
       { date: dateStr, barber_id: barberId, duration_min: durationMin },

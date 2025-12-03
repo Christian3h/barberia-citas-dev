@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAppointments, useUnavailable, useSettings, useBarbers, useServices } from '@/hooks';
-import { formatShortDate } from '@/utils';
+import { formatShortDate, getTodayString } from '@/utils';
 import { APPOINTMENT_STATUS_LABELS } from '@/config';
 import type { BarberService, User, AppSettings } from '@/types';
 import { appsScriptApi } from '@/services';
@@ -81,7 +81,7 @@ export function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    getTodayString()
   );
 
   const { settings, loading: loadingSettings, updateSettings, refetch: refetchSettings } = useSettings();
@@ -363,8 +363,8 @@ export function AdminDashboard() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [newBlock, setNewBlock] = useState({
       barber_id: barbers[0]?.id || '',
-      start_date: new Date().toISOString().split('T')[0],
-      end_date: new Date().toISOString().split('T')[0],
+      start_date: getTodayString(),
+      end_date: getTodayString(),
       start_time: '09:00',
       end_time: '20:00',
       full_day: true,

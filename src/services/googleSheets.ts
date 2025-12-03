@@ -120,6 +120,32 @@ function parseVisualizationResponse<T>(text: string): T[] {
       return String(value || '');
     };
 
+    // Función para normalizar valores numéricos
+    const normalizeNumber = (value: unknown): number => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
+
+    // Función para normalizar booleanos
+    const normalizeBoolean = (value: unknown): boolean => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true' || value === '1';
+      }
+      if (typeof value === 'number') return value !== 0;
+      return false;
+    };
+
+    // Campos que deben ser numéricos
+    const numericFields = ['duration_min', 'price', 'slot_interval_min', 'purge_after_days', 'max_book_ahead_days', 'min_advance_hours'];
+    
+    // Campos que deben ser booleanos
+    const booleanFields = ['active', 'full_day'];
+
     // Convertir filas a objetos
     return rows.map((row: { c: Array<{ v: unknown; f?: string } | null> }) => {
       const obj: Record<string, unknown> = {};
@@ -142,6 +168,10 @@ function parseVisualizationResponse<T>(text: string): T[] {
           obj[header] = normalizeDate(value, formatted);
         } else if (header === 'time' || header === 'start_time' || header === 'end_time') {
           obj[header] = normalizeTime(value, formatted);
+        } else if (numericFields.includes(header)) {
+          obj[header] = normalizeNumber(value);
+        } else if (booleanFields.includes(header)) {
+          obj[header] = normalizeBoolean(value);
         } else {
           obj[header] = value;
         }

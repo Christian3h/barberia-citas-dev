@@ -39,6 +39,33 @@ const initialFormData: BookingFormData = {
   notes: '',
 };
 
+/**
+ * Valida si un número de teléfono es válido para Colombia
+ */
+function isValidColombianPhone(phone: string): boolean {
+  const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
+  
+  let numberWithoutCountry = cleanPhone;
+  if (cleanPhone.startsWith('+57')) {
+    numberWithoutCountry = cleanPhone.slice(3);
+  } else if (cleanPhone.startsWith('57') && cleanPhone.length > 10) {
+    numberWithoutCountry = cleanPhone.slice(2);
+  }
+  
+  if (!/^\d{10}$/.test(numberWithoutCountry)) {
+    return false;
+  }
+  
+  if (!numberWithoutCountry.startsWith('3')) {
+    return false;
+  }
+  
+  const prefix = numberWithoutCountry.substring(0, 3);
+  const validPrefixes = ['300', '301', '302', '303', '304', '305', '310', '311', '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '322', '323', '324', '325', '350', '351'];
+  
+  return validPrefixes.includes(prefix);
+}
+
 export function BookingPage() {
   const [formData, setFormData] = useState<BookingFormData>(initialFormData);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -98,7 +125,7 @@ export function BookingPage() {
       formData.date &&
       formData.time &&
       formData.customer_name.trim().length >= 2 &&
-      formData.phone.replace(/\D/g, '').length >= 7
+      isValidColombianPhone(formData.phone)
     );
   };
 

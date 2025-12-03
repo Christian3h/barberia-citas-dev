@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppointments, useBarbers, useServices } from '@/hooks';
 import { APPOINTMENT_STATUS_LABELS } from '@/config';
+import { getTodayString } from '@/utils';
 import type { Appointment } from '@/types';
 
 import './BarberPage.css';
@@ -15,7 +16,7 @@ import './BarberPage.css';
 export function BarberPage() {
   const { barberId } = useParams<{ barberId: string }>();
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    getTodayString()
   );
   const [completingId, setCompletingId] = useState<string | null>(null);
 
