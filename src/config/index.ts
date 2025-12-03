@@ -58,7 +58,9 @@ export const DEFAULT_SETTINGS = {
   timezone: 'America/Bogota',
   purge_after_days: 7,
   max_book_ahead_days: 30,
-  min_advance_hours: 1,  // Horas mínimas de anticipación para agendar
+  min_advance_hours: 1,
+  admin_pin: '1234',
+  business_name: 'Barbería',
 };
 
 /**

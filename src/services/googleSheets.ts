@@ -40,10 +40,33 @@ function parseVisualizationResponse<T>(text: string): T[] {
     }
 
     const cols = data.table.cols;
-    const rows = data.table.rows;
+    let rows = data.table.rows;
 
-    // Obtener headers de las columnas
-    const headers = cols.map((col: { label: string; id: string }) => col.label || col.id);
+    // Verificar si los labels de las columnas están vacíos
+    const allLabelsEmpty = cols.every((col: { label: string; id: string }) => !col.label || col.label.trim() === '');
+
+    let headers: string[];
+
+    if (allLabelsEmpty && rows.length > 0) {
+      // Si todos los labels están vacíos, usar la primera fila como headers
+      const firstRow = rows[0];
+      headers = firstRow.c.map((cell: { v: unknown } | null) => String(cell?.v || '').trim());
+      // Saltar la primera fila (headers) de los datos
+      rows = rows.slice(1);
+    } else {
+      // Usar los labels de las columnas como headers
+      // Algunos labels pueden estar corruptos (ej: "key business_name" en vez de "key")
+      // En ese caso, extraer solo la primera palabra (el nombre del campo)
+      headers = cols.map((col: { label: string; id: string }) => {
+        const label = col.label || col.id;
+        // Si el label contiene espacio, tomar solo la primera palabra
+        // (esto maneja el caso de labels corruptos como "key business_name")
+        if (label.includes(' ')) {
+          return label.split(' ')[0];
+        }
+        return label;
+      });
+    }
 
     // Función para normalizar fechas a formato YYYY-MM-DD
     const normalizeDate = (value: unknown, formattedValue?: string): string => {
@@ -282,21 +305,38 @@ export async function getSettings(): Promise<AppSettings> {
     const result = { ...DEFAULT_SETTINGS };
 
     settings.forEach((setting) => {
-      const key = setting.key;
+      // Cast key to string para manejar diferentes nombres de campos en la hoja
+      const key = String(setting.key).trim();
       const value = setting.value;
 
       switch (key) {
         case 'slot_interval_min':
         case 'purge_after_days':
+          result[key as keyof typeof result] = typeof value === 'number' ? value : (parseInt(String(value), 10) || result[key as keyof typeof result]) as never;
+          break;
         case 'max_book_ahead_days':
-          result[key] = typeof value === 'number' ? value : (parseInt(String(value), 10) || result[key]);
+        case 'max_advance_days':
+          result.max_book_ahead_days = typeof value === 'number' ? value : (parseInt(String(value), 10) || result.max_book_ahead_days);
+          break;
+        case 'min_advance_hours':
+          result.min_advance_hours = typeof value === 'number' ? value : (parseInt(String(value), 10) || result.min_advance_hours);
           break;
         case 'business_start':
+        case 'open_time':
+          result.business_start = parseTimeValue(value) || result.business_start;
+          break;
         case 'business_end':
-          result[key] = parseTimeValue(value) || result[key];
+        case 'close_time':
+          result.business_end = parseTimeValue(value) || result.business_end;
           break;
         case 'timezone':
-          result[key] = String(value) || result[key];
+          result.timezone = String(value) || result.timezone;
+          break;
+        case 'admin_pin':
+          result.admin_pin = String(value) || result.admin_pin;
+          break;
+        case 'business_name':
+          result.business_name = String(value) || result.business_name;
           break;
       }
     });

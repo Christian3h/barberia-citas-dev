@@ -287,8 +287,15 @@
 }
 
 .actions-cell {
-  display: flex;
-  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+
+.actions-cell .btn {
+  margin-right: var(--spacing-xs);
+}
+
+.actions-cell .btn:last-child {
+  margin-right: 0;
 }
 
 /* Status Badge */
@@ -486,13 +493,14 @@
 }
 
 .btn-secondary {
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-input);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-accent);
 }
 
 .btn-success {
