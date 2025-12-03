@@ -112,19 +112,20 @@ export function AdminDashboard() {
     setIsAuthenticated(false);
   };
 
-  // Esperar a que carguen los settings antes de mostrar el login
+  // Mostrar loading mientras cargan los settings (para tener el PIN correcto)
   if (loadingSettings) {
     return (
       <div className="admin-login">
         <div className="login-card">
           <div className="login-icon">⏳</div>
           <h2>Cargando...</h2>
+          <p>Preparando panel de administración</p>
         </div>
       </div>
     );
   }
 
-  // Mostrar login si no está autenticado
+  // Mostrar login si no está autenticado (después de cargar settings)
   if (!isAuthenticated) {
     // Debug: mostrar qué PIN se está usando
     console.log('=== DEBUG LOGIN ===');
@@ -288,11 +289,14 @@ export function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((apt) => (
+                {appointments.map((apt) => {
+                  // Buscar el nombre del servicio por ID o por nombre
+                  const serviceName = allServices.find(s => s.id === apt.service)?.name || apt.service;
+                  return (
                   <tr key={apt.id}>
                     <td className="time-cell">{apt.time}</td>
                     <td>{apt.customer_name}</td>
-                    <td>{apt.service}</td>
+                    <td>{serviceName}</td>
                     <td>{barbers.find(b => b.id === apt.barber_id)?.name || apt.barber_id}</td>
                     <td>{apt.phone}</td>
                     <td>
@@ -329,7 +333,7 @@ export function AdminDashboard() {
                             const phone = String(apt.phone).replace(/\D/g, '');
                             const phoneFormatted = phone.startsWith('57') ? phone : `57${phone}`;
                             const clientName = apt.customer_name?.trim() || 'cliente';
-                            const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${apt.service} - Barbero: ${barberName}. Te esperamos!`;
+                            const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${serviceName} - Barbero: ${barberName}. Te esperamos!`;
                             const url = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
                             window.open(url, '_blank');
                           }}
@@ -340,7 +344,8 @@ export function AdminDashboard() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -497,10 +502,10 @@ export function AdminDashboard() {
               <tbody>
                 {unavailable.map((block) => (
                   <tr key={block.id}>
-                    <td>{barbers.find((b) => b.id === block.barber_id)?.name || block.barber_id}</td>
-                    <td>{formatShortDate(block.start_date)}</td>
-                    <td>{formatShortDate(block.end_date)}</td>
-                    <td>{block.full_day ? 'Todo el día' : `${block.start_time} - ${block.end_time}`}</td>
+                    <td>{barbers.find((b) => b.id === block.barber_id)?.name || block.barber_id || '-'}</td>
+                    <td>{formatShortDate(block.start_date) || '-'}</td>
+                    <td>{formatShortDate(block.end_date) || '-'}</td>
+                    <td>{block.full_day ? 'Todo el día' : (block.start_time && block.end_time ? `${block.start_time} - ${block.end_time}` : 'Todo el día')}</td>
                     <td>{block.reason || '-'}</td>
                     <td>
                       <button
@@ -562,7 +567,7 @@ export function AdminDashboard() {
 
     const confirmDelete = async () => {
       if (!deletingService) return;
-      
+
       setSaving(true);
       try {
         const result = await appsScriptApi.deleteService(deletingService.id);
@@ -589,7 +594,7 @@ export function AdminDashboard() {
         } else {
           result = await appsScriptApi.createService(formData as Omit<BarberService, 'id'>);
         }
-        
+
         if (result.success) {
           resetForm();
           refetchServices();
@@ -730,17 +735,17 @@ export function AdminDashboard() {
               <h2 className="modal-title">Eliminar Servicio</h2>
               <p>¿Estás seguro de que deseas eliminar el servicio <strong>{deletingService.name}</strong>?</p>
               <p className="text-warning">Esta acción no se puede deshacer y el servicio dejará de estar disponible inmediatamente.</p>
-              
+
               <div className="modal-actions">
-                <button 
-                  className="btn btn-secondary" 
+                <button
+                  className="btn btn-secondary"
                   onClick={() => setDeletingService(null)}
                   disabled={saving}
                 >
                   Cancelar
                 </button>
-                <button 
-                  className="btn btn-danger" 
+                <button
+                  className="btn btn-danger"
                   onClick={confirmDelete}
                   disabled={saving}
                 >
@@ -816,7 +821,7 @@ export function AdminDashboard() {
 
     const confirmDelete = async () => {
       if (!deletingBarber) return;
-      
+
       setSaving(true);
       try {
         await appsScriptApi.deleteUser(deletingBarber.id);
@@ -942,17 +947,17 @@ export function AdminDashboard() {
               <h2 className="modal-title">Eliminar Barbero</h2>
               <p>¿Estás seguro de que deseas eliminar a <strong>{deletingBarber.name}</strong>?</p>
               <p className="text-warning">Esta acción no se puede deshacer y el barbero dejará de estar disponible inmediatamente en todas las páginas.</p>
-              
+
               <div className="modal-actions">
-                <button 
-                  className="btn btn-secondary" 
+                <button
+                  className="btn btn-secondary"
                   onClick={() => setDeletingBarber(null)}
                   disabled={saving}
                 >
                   Cancelar
                 </button>
-                <button 
-                  className="btn btn-danger" 
+                <button
+                  className="btn btn-danger"
                   onClick={confirmDelete}
                   disabled={saving}
                 >
