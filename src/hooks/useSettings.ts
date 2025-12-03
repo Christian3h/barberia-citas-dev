@@ -21,11 +21,15 @@ export function useSettings(): UseSettingsReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
 
     try {
+      // Si es un refresh forzado, invalidar el caché primero
+      if (forceRefresh) {
+        googleSheetsService.invalidateSettingsCache();
+      }
       const data = await googleSheetsService.getSettings();
       setSettings({ ...DEFAULT_SETTINGS, ...data });
     } catch (err) {
@@ -44,7 +48,10 @@ export function useSettings(): UseSettingsReturn {
     try {
       // Actualizar cada setting individualmente
       for (const [key, value] of Object.entries(payload)) {
-        await appsScriptApi.updateSetting(key, String(value));
+        const result = await appsScriptApi.updateSetting(key, String(value));
+        if (!result.success) {
+          throw new Error(result.error || `Error al actualizar ${key}`);
+        }
       }
       setSettings(prev => ({ ...prev, ...payload }));
       return { success: true, data: { ...settings, ...payload } };
@@ -57,7 +64,7 @@ export function useSettings(): UseSettingsReturn {
     settings,
     loading,
     error,
-    refetch: fetchSettings,
+    refetch: () => fetchSettings(true),
     updateSettings: update,
   };
 }

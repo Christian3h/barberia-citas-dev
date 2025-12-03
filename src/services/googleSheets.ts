@@ -10,7 +10,6 @@ import type {
   Appointment,
   User,
   Unavailable,
-  Setting,
   AppSettings,
   ArchivedAppointment,
   BarberService,
@@ -42,8 +41,16 @@ function parseVisualizationResponse<T>(text: string): T[] {
     const cols = data.table.cols;
     const rows = data.table.rows;
 
-    // Obtener headers de las columnas
-    const headers = cols.map((col: { label: string; id: string }) => col.label || col.id);
+    // Debug: ver la estructura de columnas
+    console.log('Columnas raw:', cols);
+
+    // Obtener headers de las columnas - usar label, si no existe usar id
+    const headers = cols.map((col: { label: string; id: string }) => {
+      const header = col.label || col.id;
+      return header;
+    });
+    
+    console.log('Headers parseados:', headers);
 
     // Función para normalizar fechas a formato YYYY-MM-DD
     const normalizeDate = (value: unknown, formattedValue?: string): string => {
@@ -268,12 +275,75 @@ function parseTimeValue(value: unknown): string {
 }
 
 /**
+ * Lee la hoja Settings que tiene estructura key-value sin headers tradicionales
+ */
+async function readSettingsSheet(): Promise<Array<{ key: string; value: string | number }>> {
+  try {
+    const url = getVisualizationUrl(SHEETS.SETTINGS);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error('Error reading Settings sheet:', response.statusText);
+      return [];
+    }
+
+    const text = await response.text();
+    
+    // Parsear respuesta de Google Visualization API
+    const jsonStr = text.replace(/^[^{]*/, '').replace(/\);?\s*$/, '');
+    const data = JSON.parse(jsonStr);
+
+    if (!data.table || !data.table.rows || data.table.rows.length === 0) {
+      return [];
+    }
+
+    const rows = data.table.rows;
+    
+    // La hoja Settings tiene estructura: columna A = key, columna B = value
+    // No usa headers, cada fila es un par key-value
+    const settings: Array<{ key: string; value: string | number }> = [];
+    
+    for (const row of rows) {
+      const cells = row.c;
+      if (cells && cells.length >= 2) {
+        const keyCell = cells[0];
+        const valueCell = cells[1];
+        
+        const key = keyCell?.v != null ? String(keyCell.v).trim() : '';
+        let value: string | number = valueCell?.v != null ? valueCell.v : '';
+        
+        // Si el valor es un número, mantenerlo como número
+        if (typeof value === 'number') {
+          // mantener como número
+        } else {
+          value = String(value);
+        }
+        
+        if (key) {
+          settings.push({ key, value });
+        }
+      }
+    }
+    
+    console.log('Settings parseados de Google Sheets:', settings);
+    return settings;
+  } catch (error) {
+    console.error('Error parsing Settings sheet:', error);
+    return [];
+  }
+}
+
+/**
  * Obtiene la configuración del sistema (con caché de 30 segundos)
  */
 export async function getSettings(): Promise<AppSettings> {
   return cache.get('settings', async () => {
     try {
-      const settings = await readSheet<Setting>(SHEETS.SETTINGS);
+      // Usar función especial para leer Settings (estructura key-value)
+      const settings = await readSettingsSheet();
+      
+      // Debug: ver qué settings se leyeron
+      console.log('Settings leídos:', settings);
 
       if (settings.length === 0) {
         return DEFAULT_SETTINGS;
@@ -284,22 +354,24 @@ export async function getSettings(): Promise<AppSettings> {
     settings.forEach((setting) => {
       const key = setting.key;
       const value = setting.value;
+      
+      // Debug: ver cada setting
+      console.log(`Setting: key="${key}", value="${value}", tipo=${typeof value}`);
 
-      switch (key) {
-        case 'slot_interval_min':
-        case 'purge_after_days':
-        case 'max_book_ahead_days':
-          result[key] = typeof value === 'number' ? value : (parseInt(String(value), 10) || result[key]);
-          break;
-        case 'business_start':
-        case 'business_end':
-          result[key] = parseTimeValue(value) || result[key];
-          break;
-        case 'timezone':
-          result[key] = String(value) || result[key];
-          break;
+      // Procesar según el tipo de setting
+      if (key === 'slot_interval_min' || key === 'purge_after_days' || key === 'max_book_ahead_days') {
+        (result as Record<string, unknown>)[key] = typeof value === 'number' ? value : (parseInt(String(value), 10) || (result as Record<string, unknown>)[key]);
+      } else if (key === 'min_advance_hours') {
+        result.min_advance_hours = typeof value === 'number' ? value : (parseFloat(String(value)) || result.min_advance_hours);
+      } else if (key === 'business_start' || key === 'business_end') {
+        (result as Record<string, unknown>)[key] = parseTimeValue(value) || (result as Record<string, unknown>)[key];
+      } else if (key === 'timezone' || key === 'business_name' || key === 'admin_pin' || key === 'working_days') {
+        (result as Record<string, unknown>)[key] = String(value) || (result as Record<string, unknown>)[key];
       }
     });
+    
+      // Debug: ver resultado final
+      console.log('Settings procesados:', result);
 
       return result;
     } catch {

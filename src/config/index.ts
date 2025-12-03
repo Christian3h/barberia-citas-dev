@@ -59,6 +59,9 @@ export const DEFAULT_SETTINGS = {
   purge_after_days: 7,
   max_book_ahead_days: 30,
   min_advance_hours: 1,  // Horas mínimas de anticipación para agendar
+  admin_pin: '1234',     // PIN por defecto para admin
+  business_name: 'Barbería',
+  working_days: '1,2,3,4,5,6', // Lunes a Sábado
 };
 
 /**

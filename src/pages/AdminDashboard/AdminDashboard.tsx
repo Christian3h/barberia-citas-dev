@@ -84,7 +84,7 @@ export function AdminDashboard() {
     new Date().toISOString().split('T')[0]
   );
 
-  const { settings, loading: loadingSettings, updateSettings } = useSettings();
+  const { settings, loading: loadingSettings, updateSettings, refetch: refetchSettings } = useSettings();
   // Cargar todas las citas para el Dashboard, luego filtrar por fecha seleccionada en la tabla
   const { appointments: allAppointments, loading: loadingAppointments, cancelAppointment, completeAppointment } = useAppointments({});
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
@@ -112,8 +112,26 @@ export function AdminDashboard() {
     setIsAuthenticated(false);
   };
 
+  // Esperar a que carguen los settings antes de mostrar el login
+  if (loadingSettings) {
+    return (
+      <div className="admin-login">
+        <div className="login-card">
+          <div className="login-icon">⏳</div>
+          <h2>Cargando...</h2>
+        </div>
+      </div>
+    );
+  }
+
   // Mostrar login si no está autenticado
   if (!isAuthenticated) {
+    // Debug: mostrar qué PIN se está usando
+    console.log('=== DEBUG LOGIN ===');
+    console.log('Settings completos:', settings);
+    console.log('Admin PIN desde settings:', settings.admin_pin);
+    console.log('Tipo de admin_pin:', typeof settings.admin_pin);
+    console.log('PIN que se usará:', settings.admin_pin || '1234');
     return (
       <AdminLogin
         onLogin={() => setIsAuthenticated(true)}
@@ -964,10 +982,16 @@ export function AdminDashboard() {
       setSaving(true);
       setMessage('');
       try {
-        await updateSettings(editedSettings);
-        setMessage('✅ Configuración guardada');
-      } catch {
-        setMessage('❌ Error al guardar');
+        const result = await updateSettings(editedSettings);
+        if (result.success) {
+          setMessage('✅ Configuración guardada');
+          // Recargar settings desde el servidor para asegurar sincronización
+          await refetchSettings();
+        } else {
+          setMessage(`❌ Error: ${result.error || 'Error al guardar'}`);
+        }
+      } catch (err) {
+        setMessage(`❌ Error: ${err instanceof Error ? err.message : 'Error al guardar'}`);
       }
       setSaving(false);
     };

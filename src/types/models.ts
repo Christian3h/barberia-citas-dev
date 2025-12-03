@@ -66,7 +66,11 @@ export type SettingKey =
   | 'business_end'
   | 'timezone'
   | 'purge_after_days'
-  | 'max_book_ahead_days';
+  | 'max_book_ahead_days'
+  | 'min_advance_hours'
+  | 'admin_pin'
+  | 'business_name'
+  | 'working_days';
 
 /**
  * Tabla: Settings (Configuración)
@@ -74,7 +78,7 @@ export type SettingKey =
  */
 export interface Setting {
   key: SettingKey;
-  value: string;
+  value: string | number;
 }
 
 /**
