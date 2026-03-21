@@ -11,7 +11,7 @@
 export const GOOGLE_SHEETS_CONFIG = {
   // ID de tu Google Spreadsheet (extraer de la URL)
   // URL: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit
-  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || '1si-B00XnXOeqa0U8cxllij8fhqdBE8Tz3FWHe0H8wDM',
+  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || '13whwhBeGRDQVvZX_8yAaOYGD0bzp8UrH',
 
   // API Key para lectura pública (opcional pero recomendado)
   API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || '',
