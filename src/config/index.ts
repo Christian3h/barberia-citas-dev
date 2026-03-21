@@ -17,7 +17,7 @@ export const GOOGLE_SHEETS_CONFIG = {
   API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || '',
 
   // URL del Web App de Apps Script para escritura
-  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbwU-V2PmCyT9p-naXGmooMC9RWGt1AKK8pYal60sA1BhdmUbP7qFj1aVKp9IItYLjnT/exec',
+  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbwHQSy6agThpUWImpImJkfA1RCIyOCVeVyNiMPvzBQCDNMJS_G9EHDces76K2J6lFv0/exec',
 
   // Nombres de las hojas (deben coincidir exactamente con Google Sheets)
   SHEETS: {
