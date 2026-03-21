@@ -11,13 +11,13 @@
 export const GOOGLE_SHEETS_CONFIG = {
   // ID de tu Google Spreadsheet (extraer de la URL)
   // URL: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit
-  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || '13whwhBeGRDQVvZX_8yAaOYGD0bzp8UrH',
+  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || '12sj_5hTtwa3iBzuwFkzRrpKsVmougHS79dvIdXNugeY',
 
   // API Key para lectura pública (opcional pero recomendado)
   API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || '',
 
   // URL del Web App de Apps Script para escritura
-  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL || '',
+  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbwU-V2PmCyT9p-naXGmooMC9RWGt1AKK8pYal60sA1BhdmUbP7qFj1aVKp9IItYLjnT/exec',
 
   // Nombres de las hojas (deben coincidir exactamente con Google Sheets)
   SHEETS: {
