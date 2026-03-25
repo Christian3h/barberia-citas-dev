@@ -22,6 +22,10 @@
   gap: var(--spacing-md);
 }
 
+.barber-options.has-error .barber-option {
+  border-color: var(--color-danger, #dc2626);
+}
+
 .barber-option {
   display: flex;
   align-items: center;

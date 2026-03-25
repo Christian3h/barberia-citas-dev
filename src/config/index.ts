@@ -11,22 +11,22 @@
 export const GOOGLE_SHEETS_CONFIG = {
   // ID de tu Google Spreadsheet (extraer de la URL)
   // URL: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit
-  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || '12sj_5hTtwa3iBzuwFkzRrpKsVmougHS79dvIdXNugeY',
+  SPREADSHEET_ID: import.meta.env.VITE_GOOGLE_SPREADSHEET_ID,
 
   // API Key para lectura pública (opcional pero recomendado)
-  API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || '',
+  API_KEY: import.meta.env.VITE_GOOGLE_API_KEY,
 
   // URL del Web App de Apps Script para escritura
-  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbwHQSy6agThpUWImpImJkfA1RCIyOCVeVyNiMPvzBQCDNMJS_G9EHDces76K2J6lFv0/exec',
+  APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL,
 
   // Nombres de las hojas (deben coincidir exactamente con Google Sheets)
   SHEETS: {
-    APPOINTMENTS: import.meta.env.VITE_SHEET_APPOINTMENTS || 'Appointments',
-    USERS: import.meta.env.VITE_SHEET_USERS || 'Users',
-    UNAVAILABLE: import.meta.env.VITE_SHEET_UNAVAILABLE || 'Unavailable',
-    SETTINGS: import.meta.env.VITE_SHEET_SETTINGS || 'Settings',
-    ARCHIVE: import.meta.env.VITE_SHEET_ARCHIVE || 'Archive',
-    SERVICES: import.meta.env.VITE_SHEET_SERVICES || 'Services',
+    APPOINTMENTS: import.meta.env.VITE_SHEET_APPOINTMENTS,
+    USERS: import.meta.env.VITE_SHEET_USERS,
+    UNAVAILABLE: import.meta.env.VITE_SHEET_UNAVAILABLE,
+    SETTINGS: import.meta.env.VITE_SHEET_SETTINGS,
+    ARCHIVE: import.meta.env.VITE_SHEET_ARCHIVE,
+    SERVICES: import.meta.env.VITE_SHEET_SERVICES,
   },
 };
 
@@ -35,7 +35,7 @@ export const GOOGLE_SHEETS_CONFIG = {
  */
 export const WULSHIS_CONFIG = {
   // URL base de tu instancia Wulshis
-  BASE_URL: import.meta.env.VITE_WULSHIS_URL || 'http://localhost:3001',
+  BASE_URL: import.meta.env.VITE_WULSHIS_URL,
 
   // Endpoints
   ENDPOINTS: {
@@ -82,7 +82,9 @@ export const APPOINTMENT_STATUS_LABELS = {
   scheduled: { label: 'Agendada', color: 'blue' },
   cancelled: { label: 'Cancelada', color: 'red' },
   done: { label: 'Completada', color: 'green' },
-};
+} as const;
+
+export type AppointmentStatus = keyof typeof APPOINTMENT_STATUS_LABELS;
 
 /**
  * Roles de usuario con labels

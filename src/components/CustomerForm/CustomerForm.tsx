@@ -16,83 +16,81 @@ interface CustomerFormProps {
   value: CustomerData;
   onChange: (data: CustomerData) => void;
   disabled?: boolean;
+  errors?: {
+    customer_name?: string;
+    phone?: string;
+  };
 }
 
-/**
- * Valida si un número de teléfono es válido para Colombia
- * Formatos válidos:
- * - 10 dígitos comenzando con 3 (celular): 3001234567
- * - Con código de país +57: +573001234567
- * - Con espacios o guiones: 300 123 4567, 300-123-4567
- */
 function validateColombianPhone(phone: string): { valid: boolean; error: string } {
-  // Limpiar el número de espacios, guiones y paréntesis
   const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
 
-  // Si está vacío
-  if (!cleanPhone) {
-    return { valid: false, error: 'El teléfono es requerido' };
-  }
+  if (!cleanPhone) return { valid: false, error: 'El teléfono es requerido' };
 
-  // Verificar si tiene código de país +57 o 57
-  let numberWithoutCountry = cleanPhone;
-  if (cleanPhone.startsWith('+57')) {
-    numberWithoutCountry = cleanPhone.slice(3);
-  } else if (cleanPhone.startsWith('57') && cleanPhone.length > 10) {
-    numberWithoutCountry = cleanPhone.slice(2);
-  }
+  let local = cleanPhone;
+  if (cleanPhone.startsWith('+57')) local = cleanPhone.slice(3);
+  else if (cleanPhone.startsWith('57') && cleanPhone.length > 10) local = cleanPhone.slice(2);
 
-  // Debe tener exactamente 10 dígitos
-  if (!/^\d{10}$/.test(numberWithoutCountry)) {
+  if (!/^\d{10}$/.test(local))
     return { valid: false, error: 'El número debe tener 10 dígitos' };
-  }
 
-  // Celulares colombianos comienzan con 3
-  if (!numberWithoutCountry.startsWith('3')) {
+  if (!local.startsWith('3'))
     return { valid: false, error: 'Los celulares colombianos comienzan con 3' };
-  }
 
-  // Validar prefijos de operadores colombianos válidos (30x, 31x, 32x, 33x, 35x)
-  const prefix = numberWithoutCountry.substring(0, 3);
-  const validPrefixes = ['300', '301', '302', '303', '304', '305', '310', '311', '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '322', '323', '324', '325', '350', '351'];
+  const validPrefixes = new Set([
+    '300','301','302','303','304','305',
+    '310','311','312','313','314',
+    '315','316','317','318','319',
+    '320','321','322','323','324','325',
+    '340','341','342',
+    '350','351',
+  ]);
 
-  if (!validPrefixes.includes(prefix)) {
+  if (!validPrefixes.has(local.substring(0, 3)))
     return { valid: false, error: 'Prefijo de operador no válido' };
-  }
 
   return { valid: true, error: '' };
 }
-
 
 export function CustomerForm({
   value,
   onChange,
   disabled = false,
+  errors = {},
 }: CustomerFormProps) {
-  const [phoneError, setPhoneError] = useState<string>('');
+  // Error interno del teléfono (validación al escribir/blur)
+  // Solo se muestra si el padre no está enviando un error externo
+  const [phoneLocalError, setPhoneLocalError] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
 
+  // Si el padre limpia su error externo, también limpiamos el interno
   useEffect(() => {
-    if (phoneTouched && value.phone) {
-      const validation = validateColombianPhone(value.phone);
-      setPhoneError(validation.valid ? '' : validation.error);
+    if (!errors.phone) setPhoneLocalError('');
+  }, [errors.phone]);
+
+  // Validación en tiempo real (solo después de que el campo fue tocado)
+  useEffect(() => {
+    if (phoneTouched && value.phone && !errors.phone) {
+      const { valid, error } = validateColombianPhone(value.phone);
+      setPhoneLocalError(valid ? '' : error);
     }
-  }, [value.phone, phoneTouched]);
+  }, [value.phone, phoneTouched, errors.phone]);
 
   const handleChange = (field: keyof CustomerData, fieldValue: string) => {
-    onChange({
-      ...value,
-      [field]: fieldValue,
-    });
+    onChange({ ...value, [field]: fieldValue });
   };
 
   const handlePhoneBlur = () => {
     setPhoneTouched(true);
-    if (value.phone) {
-      const validation = validateColombianPhone(value.phone);
-      setPhoneError(validation.valid ? '' : validation.error);
+    if (value.phone && !errors.phone) {
+      const { valid, error } = validateColombianPhone(value.phone);
+      setPhoneLocalError(valid ? '' : error);
     }
   };
+
+  // El error que se muestra: el externo (del padre) tiene prioridad
+  const phoneDisplayError = errors.phone || phoneLocalError;
+  const nameDisplayError  = errors.customer_name;
 
   return (
     <div className="customer-form">
@@ -107,8 +105,12 @@ export function CustomerForm({
           value={value.customer_name}
           onChange={(e) => handleChange('customer_name', e.target.value)}
           disabled={disabled}
+          className={nameDisplayError ? 'input-error' : ''}
           required
         />
+        {nameDisplayError && (
+          <span className="field-error">⚠ {nameDisplayError}</span>
+        )}
       </div>
 
       <div className="form-group">
@@ -121,10 +123,12 @@ export function CustomerForm({
           onChange={(e) => handleChange('phone', e.target.value)}
           onBlur={handlePhoneBlur}
           disabled={disabled}
+          className={phoneDisplayError ? 'input-error' : ''}
           required
-          className={phoneError ? 'input-error' : ''}
         />
-        {phoneError && <span className="field-error">{phoneError}</span>}
+        {phoneDisplayError && (
+          <span className="field-error">⚠ {phoneDisplayError}</span>
+        )}
         <small className="field-hint">Número de celular colombiano (10 dígitos)</small>
       </div>
 

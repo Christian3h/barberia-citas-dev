@@ -8,6 +8,11 @@
   box-shadow: var(--shadow-md);
 }
 
+.date-picker.has-error {
+  border: 2px solid var(--color-danger, #dc2626);
+  border-radius: var(--border-radius);
+}
+
 .date-picker.disabled {
   opacity: 0.5;
   pointer-events: none;

@@ -30,7 +30,8 @@ export function isAppsScriptConfigured(): boolean {
 
 /**
  * Cliente HTTP para Apps Script
- * Usa GET con parámetros para evitar problemas CORS con POST+redirect
+ * Usa GET con payload en query params para evitar preflight CORS
+ * GAS responde con 302 redirect → fetch lo sigue automáticamente con redirect: 'follow'
  */
 async function fetchAppsScript<T>(
   payload: Record<string, unknown>
@@ -43,18 +44,19 @@ async function fetchAppsScript<T>(
   }
 
   try {
-    // Codificar payload como parámetro para evitar problemas CORS
+    // ✅ FIX: Codificar payload en la URL y usar GET sin headers
     const encodedPayload = encodeURIComponent(JSON.stringify(payload));
     const url = `${APPS_SCRIPT_URL}?payload=${encodedPayload}`;
 
     const response = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
+      // ⛔ Sin headers — cualquier header custom dispara preflight OPTIONS
+      // que Google Apps Script no puede manejar
     });
 
     const text = await response.text();
 
-    // Intentar parsear como JSON
     let result;
     try {
       result = JSON.parse(text);
@@ -65,7 +67,6 @@ async function fetchAppsScript<T>(
       };
     }
 
-    // Si el resultado tiene un campo 'error', es un error
     if (result.error) {
       return {
         success: false,
@@ -73,7 +74,6 @@ async function fetchAppsScript<T>(
       };
     }
 
-    // Si el resultado tiene 'success: false', es un error
     if (result.success === false) {
       return {
         success: false,
@@ -81,7 +81,6 @@ async function fetchAppsScript<T>(
       };
     }
 
-    // Si el resultado tiene 'success: true', devolver los datos directamente
     if (result.success === true) {
       return {
         success: true,
@@ -89,7 +88,6 @@ async function fetchAppsScript<T>(
       };
     }
 
-    // Si no tiene campo 'success', asumir que es exitoso
     return {
       success: true,
       data: result as T,
@@ -106,9 +104,6 @@ async function fetchAppsScript<T>(
 // OPERACIONES GENÉRICAS (cualquier tabla)
 // ============================================
 
-/**
- * Inserta un registro en cualquier tabla
- */
 export async function insertRecord<T>(
   sheet: string,
   data: Record<string, unknown>,
@@ -122,9 +117,6 @@ export async function insertRecord<T>(
   });
 }
 
-/**
- * Actualiza un registro en cualquier tabla
- */
 export async function updateRecord(
   sheet: string,
   id: string,
@@ -138,9 +130,6 @@ export async function updateRecord(
   });
 }
 
-/**
- * Elimina un registro de cualquier tabla
- */
 export async function deleteRecord(
   sheet: string,
   id: string
@@ -156,9 +145,6 @@ export async function deleteRecord(
 // APPOINTMENTS - Citas
 // ============================================
 
-/**
- * Crea una nueva cita via Apps Script
- */
 export async function createAppointment(
   payload: CreateAppointmentPayload
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
@@ -172,9 +158,6 @@ export async function createAppointment(
   return result;
 }
 
-/**
- * Actualiza el estado de una cita
- */
 export async function updateAppointmentStatus(
   id: string,
   status: 'scheduled' | 'cancelled' | 'done'
@@ -190,18 +173,12 @@ export async function updateAppointmentStatus(
   return result;
 }
 
-/**
- * Cancela una cita
- */
 export async function cancelAppointment(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
   return updateAppointmentStatus(id, 'cancelled');
 }
 
-/**
- * Marca una cita como completada
- */
 export async function completeAppointment(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
@@ -212,9 +189,6 @@ export async function completeAppointment(
 // SERVICES - Servicios
 // ============================================
 
-/**
- * Crea un nuevo servicio
- */
 export async function createService(
   data: Omit<BarberService, 'id'>
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
@@ -226,39 +200,30 @@ export async function createService(
     description: data.description || '',
     active: data.active !== undefined ? data.active : true,
   });
-  
   if (result.success) {
     invalidateServicesCache();
   }
   return result;
 }
 
-/**
- * Actualiza un servicio
- */
 export async function updateService(
   id: string,
   data: Partial<BarberService>
 ): Promise<ApiResponse<{ success: boolean }>> {
-  // Filtrar campos undefined para no enviarlos
   const payload: Record<string, unknown> = { action: 'updateService', id };
   if (data.name !== undefined) payload.name = data.name;
   if (data.duration_min !== undefined) payload.duration_min = data.duration_min;
   if (data.price !== undefined) payload.price = data.price;
   if (data.description !== undefined) payload.description = data.description;
   if (data.active !== undefined) payload.active = data.active;
-  
+
   const result = await fetchAppsScript<{ success: boolean }>(payload);
-  
   if (result.success) {
     invalidateServicesCache();
   }
   return result;
 }
 
-/**
- * Elimina un servicio
- */
 export async function deleteService(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
@@ -266,7 +231,6 @@ export async function deleteService(
     action: 'deleteService',
     id,
   });
-  
   if (result.success) {
     invalidateServicesCache();
   }
@@ -277,9 +241,6 @@ export async function deleteService(
 // USERS - Usuarios/Barberos
 // ============================================
 
-/**
- * Crea un nuevo usuario
- */
 export async function createUser(
   data: Omit<User, 'id'>
 ): Promise<ApiResponse<{ success: boolean; id: string }>> {
@@ -293,9 +254,6 @@ export async function createUser(
   return result;
 }
 
-/**
- * Actualiza un usuario
- */
 export async function updateUser(
   id: string,
   data: Partial<User>
@@ -311,9 +269,6 @@ export async function updateUser(
   return result;
 }
 
-/**
- * Elimina un usuario
- */
 export async function deleteUser(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
@@ -331,9 +286,6 @@ export async function deleteUser(
 // UNAVAILABLE - Bloqueos de horario
 // ============================================
 
-/**
- * Crea un bloqueo de horario
- */
 export async function createUnavailable(
   payload: {
     barber_id: string;
@@ -355,9 +307,6 @@ export async function createUnavailable(
   return result;
 }
 
-/**
- * Elimina un bloqueo de horario
- */
 export async function deleteUnavailable(
   id: string
 ): Promise<ApiResponse<{ success: boolean }>> {
@@ -375,9 +324,6 @@ export async function deleteUnavailable(
 // SETTINGS - Configuración
 // ============================================
 
-/**
- * Actualiza una configuración
- */
 export async function updateSetting(
   key: string,
   value: string | number

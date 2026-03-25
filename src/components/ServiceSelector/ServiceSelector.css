@@ -20,6 +20,10 @@
   gap: var(--spacing-md);
 }
 
+.service-options.has-error .service-option {
+  border-color: var(--color-danger, #dc2626);
+}
+
 .service-option {
   display: flex;
   flex-direction: column;

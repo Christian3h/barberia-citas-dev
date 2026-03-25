@@ -21,6 +21,11 @@
   border: 1px solid var(--border-color);
 }
 
+.time-slot.has-error {
+  border-color: var(--color-danger, #dc2626);
+}
+
+
 .time-slot-picker-loading {
   display: flex;
   flex-direction: column;

@@ -400,8 +400,9 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     return processRequest(data);
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, error: error.message })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 

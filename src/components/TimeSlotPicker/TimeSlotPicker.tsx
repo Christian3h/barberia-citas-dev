@@ -13,6 +13,7 @@ interface TimeSlotPickerProps {
   value: string;
   onChange: (time: string) => void;
   disabled?: boolean;
+  error?: string;
 }
 
 export function TimeSlotPicker({
@@ -22,8 +23,9 @@ export function TimeSlotPicker({
   value,
   onChange,
   disabled = false,
+  error,
 }: TimeSlotPickerProps) {
-  const { slots, loading, error } = useSlots({
+  const { slots, loading, error: fetchError } = useSlots({
     date,
     barber_id: barberId,
     duration_min: durationMin,
@@ -41,16 +43,16 @@ export function TimeSlotPicker({
   if (loading) {
     return (
       <div className="time-slot-picker-loading">
-        <div className="spinner"></div>
+        <div className="spinner" />
         <span>Cargando horarios...</span>
       </div>
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <div className="time-slot-picker-error">
-        Error al cargar horarios: {error}
+        Error al cargar horarios: {fetchError}
       </div>
     );
   }
@@ -64,24 +66,25 @@ export function TimeSlotPicker({
   }
 
   return (
-    <div className="time-slot-picker">
-      <label className="time-slot-picker-label">
-        Horarios disponibles ({slots.length})
-      </label>
-      <div className="time-slots">
-        {slots.map((time) => (
-          <button
-            key={time}
-            type="button"
-            className={`time-slot ${value === time ? 'selected' : ''}`}
-            onClick={() => onChange(time)}
-            disabled={disabled}
-          >
-            {time}
-          </button>
-        ))}
-      </div>
+  <div className="time-slot-picker">
+    <label className="time-slot-picker-label">
+      Horarios disponibles ({slots.length})
+    </label>
+    <div className="time-slots">
+     {slots.map((time) => (
+        <button
+          key={time}
+          type="button"
+          className={`time-slot ${value === time ? 'selected' : ''} ${error ? 'has-error' : ''}`}
+          onClick={() => onChange(time)}
+          disabled={disabled}
+        >
+          <span>{time}</span>
+        </button>
+      ))}
     </div>
+    {error && <span className="field-error">⚠ {error}</span>}
+  </div>
   );
 }
 

@@ -11,12 +11,14 @@ interface ServiceSelectorProps {
   value: string;
   onChange: (serviceId: string, durationMin: number) => void;
   disabled?: boolean;
+  error?: string;
 }
 
 export function ServiceSelector({
   value,
   onChange,
   disabled = false,
+  error,
 }: ServiceSelectorProps) {
   const { services, loading } = useServices();
 
@@ -32,7 +34,7 @@ export function ServiceSelector({
   return (
     <div className="service-selector">
       <label className="service-selector-label">Selecciona un servicio</label>
-      <div className="service-options">
+      <div className={`service-options ${error ? 'has-error' : ''}`}>
         {services.map((service) => (
           <button
             key={service.id}
@@ -52,6 +54,7 @@ export function ServiceSelector({
           </button>
         ))}
       </div>
+      {error && <span className="field-error">⚠ {error}</span>}
     </div>
   );
 }

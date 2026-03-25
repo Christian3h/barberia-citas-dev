@@ -14,6 +14,7 @@ import {
 } from '@/components';
 import { useAppointments } from '@/hooks';
 import { googleSheetsService } from '@/services';
+import { validColombianPhone } from '@/utils/validColombianPhone';
 import { formatDisplayDate, timeSlotCollides, calculateEndTime } from '@/utils';
 import './BookingPage.css';
 
@@ -39,35 +40,42 @@ const initialFormData: BookingFormData = {
   notes: '',
 };
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
 /**
- * Valida si un número de teléfono es válido para Colombia
+ * Comprueba si alguna cita existente choca con el slot solicitado.
+ * Devuelve la cita conflictiva o undefined.
  */
-function isValidColombianPhone(phone: string): boolean {
-  const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
-  
-  let numberWithoutCountry = cleanPhone;
-  if (cleanPhone.startsWith('+57')) {
-    numberWithoutCountry = cleanPhone.slice(3);
-  } else if (cleanPhone.startsWith('57') && cleanPhone.length > 10) {
-    numberWithoutCountry = cleanPhone.slice(2);
-  }
-  
-  if (!/^\d{10}$/.test(numberWithoutCountry)) {
-    return false;
-  }
-  
-  if (!numberWithoutCountry.startsWith('3')) {
-    return false;
-  }
-  
-  const prefix = numberWithoutCountry.substring(0, 3);
-  const validPrefixes = ['300', '301', '302', '303', '304', '305', '310', '311', '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '322', '323', '324', '325', '350', '351'];
-  
-  return validPrefixes.includes(prefix);
+async function findConflict(formData: BookingFormData) {
+  const existing = await googleSheetsService.getAppointmentsByDate(formData.date);
+
+  return existing.find((apt) => {
+    if (apt.barber_id !== formData.barber_id || apt.status !== 'scheduled') return false;
+
+    const aptDuration =
+      typeof apt.duration_min === 'number' && apt.duration_min > 0 ? apt.duration_min : 30;
+    const aptEnd = calculateEndTime(apt.time, aptDuration);
+
+    return timeSlotCollides(formData.time, formData.duration_min, apt.time, aptEnd);
+  });
 }
+
+// ─── types ───────────────────────────────────────────────────────────────────
+
+interface FieldErrors {
+  service?: string;
+  barber_id?: string;
+  date?: string;
+  time?: string;
+  customer_name?: string;
+  phone?: string;
+}
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export function BookingPage() {
   const [formData, setFormData] = useState<BookingFormData>(initialFormData);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -75,97 +83,89 @@ export function BookingPage() {
 
   const { createAppointment } = useAppointments({ autoFetch: false });
 
+  // ── field handlers (resetean `time` cuando cambia algo que afecta disponibilidad) ──
+
   const handleServiceChange = (serviceId: string, durationMin: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      service: serviceId,
-      duration_min: durationMin,
-      time: '', // Resetear hora al cambiar servicio
-    }));
+    setFormData((prev) => ({ ...prev, service: serviceId, duration_min: durationMin, time: '' }));
+    setFieldErrors((prev) => ({ ...prev, service: undefined, time: undefined }));
   };
 
   const handleBarberChange = (barberId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      barber_id: barberId,
-      time: '', // Resetear hora al cambiar barbero
-    }));
+    setFormData((prev) => ({ ...prev, barber_id: barberId, time: '' }));
+    setFieldErrors((prev) => ({ ...prev, barber_id: undefined, time: undefined }));
   };
 
   const handleDateChange = (date: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      date,
-      time: '', // Resetear hora al cambiar fecha
-    }));
+    setFormData((prev) => ({ ...prev, date, time: '' }));
+    setFieldErrors((prev) => ({ ...prev, date: undefined, time: undefined }));
   };
 
   const handleTimeChange = (time: string) => {
-    setFormData((prev) => ({
+    setFormData((prev) => ({ ...prev, time }));
+    setFieldErrors((prev) => ({ ...prev, time: undefined }));
+  };
+
+  const handleCustomerChange = (data: { customer_name: string; phone: string; notes?: string }) => {
+    setFormData((prev) => ({ ...prev, ...data }));
+    setFieldErrors((prev) => ({
       ...prev,
-      time,
+      customer_name: undefined,
+      phone: undefined,
     }));
   };
 
-  const handleCustomerChange = (data: {
-    customer_name: string;
-    phone: string;
-    notes?: string;
-  }) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...data,
-    }));
+  // ── validation ──────────────────────────────────────────────────────────────
+
+  /**
+   * Valida todos los campos y devuelve los errores encontrados.
+   * Si no hay errores devuelve un objeto vacío.
+   */
+  const validateAll = (): FieldErrors => {
+    const errors: FieldErrors = {};
+    if (!formData.service)    errors.service     = 'Selecciona un servicio';
+    if (!formData.barber_id)  errors.barber_id   = 'Selecciona un barbero';
+    if (!formData.date)       errors.date        = 'Selecciona una fecha';
+    if (!formData.time)       errors.time        = 'Selecciona una hora';
+    if (formData.customer_name.trim().length < 2)
+                              errors.customer_name = 'Ingresa tu nombre completo';
+    if (!validColombianPhone(formData.phone))
+                              errors.phone       = 'Ingresa un celular colombiano válido';
+    return errors;
   };
 
-  const isFormValid = () => {
-    return (
-      formData.service &&
-      formData.barber_id &&
-      formData.date &&
-      formData.time &&
-      formData.customer_name.trim().length >= 2 &&
-      isValidColombianPhone(formData.phone)
-    );
-  };
+  // ── submit flow ─────────────────────────────────────────────────────────────
 
   const handleSubmit = () => {
-    if (!isFormValid() || isSubmitting) return;
+    if (isSubmitting) return;
+
+    const errors = validateAll();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      // Scroll suave al primer campo con error
+      const firstErrorKey = Object.keys(errors)[0];
+      document.querySelector(`[data-field="${firstErrorKey}"]`)?.scrollIntoView({
+        behavior: 'smooth', block: 'center',
+      });
+      return;
+    }
+
+    setFieldErrors({});
     setShowConfirmation(true);
   };
 
   const handleConfirm = async () => {
-    // Prevenir doble envío
     if (isSubmitting) return;
 
     setIsSubmitting(true);
     setBookingError(null);
 
     try {
-      // Verificar disponibilidad antes de crear la cita (considerando duración del servicio)
-      const existingAppointments = await googleSheetsService.getAppointmentsByDate(formData.date);
-      
-      // Buscar conflictos considerando la duración de ambos servicios
-      const conflictingAppointment = existingAppointments.find((apt) => {
-        if (apt.barber_id !== formData.barber_id || apt.status !== 'scheduled') {
-          return false;
-        }
-        
-        // Calcular duración de la cita existente
-        const aptDuration = (typeof apt.duration_min === 'number' && apt.duration_min > 0) 
-          ? apt.duration_min 
-          : 30;
-        const aptEnd = calculateEndTime(apt.time, aptDuration);
-        
-        // Verificar si hay colisión
-        return timeSlotCollides(formData.time, formData.duration_min, apt.time, aptEnd);
-      });
+      const conflict = await findConflict(formData);
 
-      if (conflictingAppointment) {
+      if (conflict) {
         setShowConfirmation(false);
         setBookingError('Este horario acaba de ser ocupado. Por favor selecciona otro horario.');
-        setFormData(prev => ({ ...prev, time: '' })); // Resetear hora
-        setIsSubmitting(false);
+        setFormData((prev) => ({ ...prev, time: '' }));
         return;
       }
 
@@ -189,13 +189,15 @@ export function BookingPage() {
       } else {
         setBookingError(response.error || 'Error al crear la cita');
       }
-    } catch (error) {
+    } catch {
       setShowConfirmation(false);
       setBookingError('Error de conexión. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // ── success screen ──────────────────────────────────────────────────────────
 
   if (bookingSuccess) {
     return (
@@ -205,16 +207,15 @@ export function BookingPage() {
           <h2>¡Cita Agendada!</h2>
           <p>Tu cita ha sido confirmada exitosamente.</p>
           <p>Te enviaremos un recordatorio por WhatsApp.</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => setBookingSuccess(false)}
-          >
+          <button className="btn btn-primary" onClick={() => setBookingSuccess(false)}>
             Agendar otra cita
           </button>
         </div>
       </div>
     );
   }
+
+  // ── main render ─────────────────────────────────────────────────────────────
 
   return (
     <div className="booking-page">
@@ -231,48 +232,48 @@ export function BookingPage() {
       )}
 
       <div className="booking-form">
-        {/* Paso 1: Seleccionar servicio */}
-        <section className="booking-section">
+        <section className="booking-section" data-field="service">
           <h2 className="section-title">1. Elige tu servicio</h2>
           <ServiceSelector
             value={formData.service}
             onChange={handleServiceChange}
+            error={fieldErrors.service}
           />
         </section>
 
-        {/* Paso 2: Seleccionar barbero */}
-        <section className="booking-section">
+        <section className="booking-section" data-field="barber_id">
           <h2 className="section-title">2. Elige tu barbero</h2>
           <BarberSelector
             value={formData.barber_id}
             onChange={handleBarberChange}
+            error={fieldErrors.barber_id}
           />
         </section>
 
-        {/* Paso 3: Seleccionar fecha y hora */}
-        <section className="booking-section">
+        <section className="booking-section" data-field="date">
           <h2 className="section-title">3. Elige fecha y hora</h2>
           <div className="date-time-container">
             <div className="date-picker-wrapper">
               <DatePicker
                 value={formData.date}
                 onChange={handleDateChange}
+                error={fieldErrors.date}
               />
             </div>
-            <div className="time-picker-wrapper">
+            <div className="time-picker-wrapper" data-field="time">
               <TimeSlotPicker
                 date={formData.date}
                 barberId={formData.barber_id}
                 durationMin={formData.duration_min}
                 value={formData.time}
                 onChange={handleTimeChange}
+                error={fieldErrors.time}
               />
             </div>
           </div>
         </section>
 
-        {/* Paso 4: Datos del cliente */}
-        <section className="booking-section">
+        <section className="booking-section" data-field="customer_name">
           <h2 className="section-title">4. Tus datos de contacto</h2>
           <CustomerForm
             value={{
@@ -281,10 +282,13 @@ export function BookingPage() {
               notes: formData.notes,
             }}
             onChange={handleCustomerChange}
+            errors={{
+              customer_name: fieldErrors.customer_name,
+              phone: fieldErrors.phone,
+            }}
           />
         </section>
 
-        {/* Resumen y botón de confirmación */}
         <section className="booking-section booking-summary">
           {formData.date && formData.time && (
             <div className="selected-summary">
@@ -296,7 +300,7 @@ export function BookingPage() {
           <button
             className="btn btn-primary btn-large"
             onClick={handleSubmit}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={isSubmitting}
           >
             {isSubmitting ? 'Procesando...' : 'Confirmar Cita'}
           </button>

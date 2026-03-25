@@ -370,7 +370,6 @@ async function readSettingsSheet(): Promise<Array<{ key: string; value: string |
       }
     }
     
-    console.log('Settings parseados de Google Sheets:', settings);
     return settings;
   } catch (error) {
     console.error('Error parsing Settings sheet:', error);
@@ -388,7 +387,6 @@ export async function getSettings(): Promise<AppSettings> {
       const settings = await readSettingsSheet();
       
       // Debug: ver qué settings se leyeron
-      console.log('Settings leídos:', settings);
 
       if (settings.length === 0) {
         return DEFAULT_SETTINGS;
@@ -402,7 +400,6 @@ export async function getSettings(): Promise<AppSettings> {
       const value = setting.value;
       
       // Debug: ver cada setting
-      console.log(`Setting: key="${key}", value="${value}", tipo=${typeof value}`);
 
       switch (key) {
         case 'slot_interval_min':
@@ -442,7 +439,6 @@ export async function getSettings(): Promise<AppSettings> {
     });
     
       // Debug: ver resultado final
-      console.log('Settings procesados:', result);
 
       return result;
     } catch {

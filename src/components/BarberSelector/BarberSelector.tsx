@@ -10,12 +10,14 @@ interface BarberSelectorProps {
   value: string;
   onChange: (barberId: string) => void;
   disabled?: boolean;
+  error?: string;
 }
 
 export function BarberSelector({
   value,
   onChange,
   disabled = false,
+  error,
 }: BarberSelectorProps) {
   const { barbers, loading } = useBarbers();
 
@@ -24,17 +26,13 @@ export function BarberSelector({
   }
 
   if (barbers.length === 0) {
-    return (
-      <div className="barber-selector-empty">
-        No hay barberos disponibles
-      </div>
-    );
+    return <div className="barber-selector-empty">No hay barberos disponibles</div>;
   }
 
   return (
     <div className="barber-selector">
       <label className="barber-selector-label">Selecciona un barbero</label>
-      <div className="barber-options">
+      <div className={`barber-options ${error ? 'has-error' : ''}`}>
         {barbers.map((barber) => (
           <button
             key={barber.id}
@@ -50,6 +48,7 @@ export function BarberSelector({
           </button>
         ))}
       </div>
+      {error && <span className="field-error">⚠ {error}</span>}
     </div>
   );
 }

@@ -14,6 +14,7 @@ interface DatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   disabled?: boolean;
+  error?: string;
 }
 
 export function DatePicker({
@@ -22,11 +23,11 @@ export function DatePicker({
   minDate,
   maxDate,
   disabled = false,
+  error,
 }: DatePickerProps) {
   const selectedDate = value ? new Date(value + 'T00:00:00') : null;
   const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
 
-  // Normalizar minDate al inicio del día de hoy
   const normalizedMinDate = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -45,54 +46,36 @@ export function DatePicker({
   }, [currentMonth]);
 
   const firstDayOfMonth = useMemo(() => {
-    const start = startOfMonth(currentMonth);
-    return start.getDay(); // 0 = Domingo
+    return startOfMonth(currentMonth).getDay();
   }, [currentMonth]);
-
-  const handlePrevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
-  };
 
   const handleSelectDate = (date: Date) => {
     if (disabled) return;
-
-    // Verificar si la fecha está dentro del rango permitido
     const dateNormalized = new Date(date);
     dateNormalized.setHours(0, 0, 0, 0);
-
     if (dateNormalized < normalizedMinDate) return;
     if (maxDate && dateNormalized > maxDate) return;
-
-    const formatted = format(date, 'yyyy-MM-dd');
-    onChange(formatted);
+    onChange(format(date, 'yyyy-MM-dd'));
   };
 
   const isDateDisabled = (date: Date) => {
     const dateNormalized = new Date(date);
     dateNormalized.setHours(0, 0, 0, 0);
-
     if (dateNormalized < normalizedMinDate) return true;
     if (maxDate && dateNormalized > maxDate) return true;
-
-    // Deshabilitar domingos (opcional)
     if (date.getDay() === 0) return true;
-
     return false;
   };
 
   const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   return (
-    <div className={`date-picker ${disabled ? 'disabled' : ''}`}>
+    <div className={`date-picker ${disabled ? 'disabled' : ''} ${error ? 'has-error' : ''}`}>
       <div className="date-picker-header">
         <button
           type="button"
           className="date-picker-nav"
-          onClick={handlePrevMonth}
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
           disabled={disabled}
         >
           ←
@@ -103,7 +86,7 @@ export function DatePicker({
         <button
           type="button"
           className="date-picker-nav"
-          onClick={handleNextMonth}
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
           disabled={disabled}
         >
           →
@@ -112,23 +95,18 @@ export function DatePicker({
 
       <div className="date-picker-weekdays">
         {weekDays.map((day) => (
-          <span key={day} className="weekday">
-            {day}
-          </span>
+          <span key={day} className="weekday">{day}</span>
         ))}
       </div>
 
       <div className="date-picker-days">
-        {/* Espacios vacíos para alinear el primer día */}
         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
           <span key={`empty-${i}`} className="day empty" />
         ))}
-
         {days.map((date) => {
           const isSelected = selectedDate && isSameDay(date, selectedDate);
           const isCurrentDay = isToday(date);
           const isDisabled = isDateDisabled(date);
-
           return (
             <button
               key={date.toISOString()}
@@ -142,6 +120,8 @@ export function DatePicker({
           );
         })}
       </div>
+
+      {error && <span className="field-error">⚠ {error}</span>}
     </div>
   );
 }
