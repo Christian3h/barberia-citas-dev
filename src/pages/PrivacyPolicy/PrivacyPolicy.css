@@ -1,0 +1,156 @@
+/* ============================================
+   ESTILOS: Política de Privacidad
+   ============================================ */
+
+.privacy-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.privacy-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-xl);
+  transition: var(--transition-normal);
+}
+
+.back-btn:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+.privacy-header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl);
+  background: linear-gradient(145deg, var(--bg-card), rgba(69, 69, 69, 0.6));
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.privacy-icon {
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-md);
+}
+
+.privacy-header h1 {
+  font-size: var(--font-size-2xl);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.privacy-date {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.privacy-section {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+}
+
+.privacy-section h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-md);
+}
+
+.privacy-section p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: var(--spacing-md);
+}
+
+.privacy-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.privacy-section li {
+  color: var(--text-secondary);
+  padding: var(--spacing-sm) 0;
+  padding-left: var(--spacing-lg);
+  position: relative;
+  line-height: 1.6;
+}
+
+.privacy-section li::before {
+  content: '•';
+  color: var(--color-accent);
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.privacy-section strong {
+  color: var(--text-primary);
+}
+
+.contact-info {
+  margin-top: var(--spacing-md);
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--color-success), #00d9a5);
+  color: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 184, 148, 0.4);
+}
+
+.privacy-footer {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  border-top: 1px solid var(--border-color);
+  margin-top: var(--spacing-xl);
+}
+
+.privacy-footer p {
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .privacy-header h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  .privacy-section {
+    padding: var(--spacing-md);
+  }
+
+  .privacy-section h2 {
+    font-size: var(--font-size-md);
+  }
+}
