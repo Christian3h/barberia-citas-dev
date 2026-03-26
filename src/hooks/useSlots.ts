@@ -50,6 +50,8 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
     try {
       // Invalidar caché antes de obtener para asegurar datos frescos
       googleSheetsService.invalidateAppointmentsCache();
+      // Forzar lectura fresca de días bloqueados (importante para que se actualice inmediatamente)
+      googleSheetsService.invalidateBlockedDaysCache();
       
       // Obtener datos de Google Sheets
       const [appointments, unavailable, settings] = await Promise.all([
@@ -58,12 +60,27 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
         googleSheetsService.getSettings(),
       ]);
 
+      // Intentar obtener días bloqueados de forma segura (sin romper todo si falla)
+      let blockedDay = null;
+      try {
+        // Verificar si la función existe antes de llamarla
+        if (typeof googleSheetsService.getBlockedDaysByBarber === 'function') {
+          console.log('📍 useSlots: Leyendo BlockedDaysByBarber para', fetchParams.barber_id);
+          blockedDay = await googleSheetsService.getBlockedDaysByBarber(fetchParams.barber_id);
+          console.log('📍 useSlots: BlockedDay obtenido:', blockedDay);
+        }
+      } catch (e) {
+        console.warn('Error fetching blocked days:', e);
+        // Continuamos sin bloqueo semanal si falla
+      }
+
       // Calcular slots disponibles localmente
       const availableSlots = getAvailableSlots(
         fetchParams,
         settings,
         appointments,
-        unavailable
+        unavailable,
+        blockedDay
       );
 
       setSlots(availableSlots);

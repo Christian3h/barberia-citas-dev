@@ -4,3 +4,4 @@ export { default as useSettings } from './useSettings';
 export { default as useUnavailable } from './useUnavailable';
 export { default as useServices } from './useServices';
 export { default as useBarbers } from './useBarbers';
+export * from './useBlockedDays';

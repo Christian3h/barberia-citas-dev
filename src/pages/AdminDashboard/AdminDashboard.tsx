@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAppointments, useUnavailable, useSettings, useBarbers, useServices } from '@/hooks';
+import { useAppointments, useUnavailable, useSettings, useBarbers, useServices, useBlockedDays } from '@/hooks';
 import { getTodayString } from '@/utils';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { DashboardStats } from '@/components/admin/DashboardStats';
@@ -8,6 +8,7 @@ import { UnavailableManager } from '@/components/admin/UnavailableManager';
 import { ServicesManager } from '@/components/admin/ServicesManager';
 import { BarbersManager } from '@/components/admin/BarbersManager';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
+import { BlockedDaysManager } from '@/components/admin/BlockedDaysManager';
 import './AdminDashboard.css';
 
 const SESSION_KEY = 'admin_session';
@@ -33,6 +34,7 @@ export function AdminDashboard() {
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
   const { barbers, refetch: refetchBarbers } = useBarbers({ includeInactive: true });
   const { allServices, refetch: refetchServices } = useServices();
+  const { blockedDays, loading: loadingBlockedDays, updateBlockedDays } = useBlockedDays();
 
   const appointments = allAppointments.filter(apt => apt.date === selectedDate);
 
@@ -109,13 +111,21 @@ export function AdminDashboard() {
           />
         )}
         {activeTab === 'unavailable' && (
-          <UnavailableManager
-            unavailable={unavailable}
-            barbers={barbers}
-            loading={loadingUnavailable}
-            onCreate={createUnavailable}
-            onDelete={deleteUnavailable}
-          />
+          <>
+            <UnavailableManager
+              unavailable={unavailable}
+              barbers={barbers}
+              onCreate={createUnavailable}
+              onDelete={deleteUnavailable}
+              loading={loadingUnavailable}
+            />
+            <BlockedDaysManager
+              barbers={barbers}
+              blockedDays={blockedDays}
+              onUpdate={updateBlockedDays}
+              loading={loadingBlockedDays}
+            />
+          </>
         )}
         {activeTab === 'services' && (
           <ServicesManager allServices={allServices} onRefetch={refetchServices} />

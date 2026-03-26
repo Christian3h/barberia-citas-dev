@@ -13,6 +13,7 @@ import type {
   AppSettings,
   ArchivedAppointment,
   BarberService,
+  BlockedDay,
 } from '@/types';
 import { DEFAULT_SETTINGS } from '@/config';
 
@@ -295,6 +296,7 @@ export async function getUnavailableByBarber(barberId: string): Promise<Unavaila
   return unavailable.filter((u) => u.barber_id === barberId);
 }
 
+
 /**
  * Convierte un valor de hora de Google Sheets a formato HH:MM
  * Google Sheets almacena horas como decimales (0.375 = 9:00, 0.833 = 20:00)
@@ -461,6 +463,40 @@ export async function getArchivedAppointments(): Promise<ArchivedAppointment[]> 
   return cache.get('archive', () => readSheet<ArchivedAppointment>(SHEETS.ARCHIVE));
 }
 
+/**
+ * Obtiene los días bloqueados permanentemente
+ */
+export async function getBlockedDays(): Promise<BlockedDay[]> {
+  const sheetName = SHEETS.BLOCKED_DAYS;
+  const cacheKey = `blocked_days_${sheetName}`;
+  
+  // Usar caché si existe
+  const cached = cache.get<BlockedDay[]>(cacheKey, async () => {
+    try {
+      return await readSheet<BlockedDay>(sheetName);
+    } catch (error) {
+      console.warn('Could not fetch blocked days, sheet might not exist yet', error);
+      return [];
+    }
+  });
+
+  return cached;
+}
+
+/**
+ * Obtiene los días bloqueados para un barbero específico
+ */
+export async function getBlockedDaysByBarber(barberId: string): Promise<BlockedDay | null> {
+  const allBlockedDays = await getBlockedDays();
+  console.log('📋 getBlockedDaysByBarber: Leyendo todos los bloqueados', { allBlockedDays, buscandoBarber: barberId });
+  const found = allBlockedDays.find(b => {
+    console.log('  → Comparando:', { stored_barber_id: b.barber_id, requested_barber_id: barberId, match: String(b.barber_id) === String(barberId) });
+    return String(b.barber_id) === String(barberId);
+  });
+  console.log('📋 getBlockedDaysByBarber: Resultado', { found });
+  return found || null;
+}
+
 // ============================================
 // FUNCIONES DE INVALIDACIÓN DE CACHÉ
 // ============================================
@@ -501,6 +537,15 @@ export function invalidateSettingsCache(): void {
 }
 
 /**
+ * Invalida el caché de días bloqueados
+ */
+export function invalidateBlockedDaysCache(): void {
+  const sheetName = SHEETS.BLOCKED_DAYS;
+  const cacheKey = `blocked_days_${sheetName}`;
+  cache.invalidate(cacheKey);
+}
+
+/**
  * Limpia todo el caché
  */
 export function clearAllCache(): void {
@@ -535,7 +580,10 @@ export const googleSheetsService = {
   getUnavailableByBarber,
   getSettings,
   getServices,
+  invalidateBlockedDaysCache,
   getArchivedAppointments,
+  getBlockedDays,
+  getBlockedDaysByBarber,
   // Invalidación de caché
   invalidateAppointmentsCache,
   invalidateUsersCache,
