@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBt_CwSEQTkUlSohOosEblLwtXxmHEi5sc",
+  apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
   authDomain: "barberia-7841d.firebaseapp.com",
   projectId: "barberia-7841d",
   storageBucket: "barberia-7841d.firebasestorage.app",
