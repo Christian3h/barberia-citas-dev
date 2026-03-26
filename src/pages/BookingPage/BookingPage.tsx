@@ -210,8 +210,10 @@ console.log('Create appointment response:', response);
           <button className="btn btn-primary" onClick={() => setBookingSuccess(false)}>
             Agendar otra cita
           </button>
-        </div>
-      </div>
+        </div>        <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+          <img src="/src/assets/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
+          <span>Made by Prigma</span>
+        </a>      </div>
     );
   }
 
@@ -314,6 +316,10 @@ console.log('Create appointment response:', response);
         onCancel={() => !isSubmitting && setShowConfirmation(false)}
         loading={isSubmitting}
       />
+      <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+        <img src="/src/assets/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
+        <span>Made by Prigma</span>
+      </a>
     </div>
   );
 }
