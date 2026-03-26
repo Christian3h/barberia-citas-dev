@@ -10,7 +10,7 @@ import './ConfirmationModal.css';
 interface AppointmentSummary {
   date: string;
   time: string;
-  service: string;
+  service_name: string;
   barber_id: string;
   customer_name: string;
   phone: string;
@@ -38,7 +38,7 @@ export function ConfirmationModal({
 
   if (!isOpen) return null;
 
-  const service = services.find((s) => s.id === appointment.service);
+  const service = services.find((s) => s.name === appointment.service_name);
   const barber = barbers.find((b) => b.id === appointment.barber_id);
 
   return (
@@ -60,7 +60,7 @@ export function ConfirmationModal({
           <div className="summary-row">
             <span className="summary-label">✂️ Servicio:</span>
             <span className="summary-value">
-              {service?.name || appointment.service}
+              {appointment.service_name} 
               {service && (
                 <span className="service-meta">
                   ({formatDuration(service.duration_min)} - ${service.price.toLocaleString()})

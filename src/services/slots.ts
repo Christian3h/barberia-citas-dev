@@ -215,7 +215,7 @@ export function validateAppointmentData(data: {
   customer_name: string;
   phone: string;
   email: string;
-  service: string;
+  service_name: string;
   barber_id: string;
 }): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -254,7 +254,7 @@ export function validateAppointmentData(data: {
   }
 
   // Validar servicio
-  if (!data.service) {
+  if (!data.service_name) {
     errors.push('Debe seleccionar un servicio');
   }
 

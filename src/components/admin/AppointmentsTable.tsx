@@ -76,7 +76,7 @@ export function AppointmentsTable ({
               <tbody>
                 {appointments.map((apt) => {
                   // Buscar el nombre del servicio por ID o por nombre
-                  const serviceName = allServices.find(s => s.id === apt.service)?.name || apt.service;
+                  const serviceName = allServices.find(s => s.id === apt.service_name)?.name || apt.service_name;
                   return (
                   <tr key={apt.id}>
                     <td className="time-cell">{apt.time}</td>

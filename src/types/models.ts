@@ -23,7 +23,7 @@ export interface Appointment {
   customer_name: string;
   phone: string;
   email: string;
-  service: string;
+  service_name: string;
   barber_id: string;
   status: AppointmentStatus;
   notes?: string;
@@ -132,7 +132,7 @@ export interface CreateAppointmentPayload {
   customer_name: string;
   phone: string;
   email: string;
-  service: string;
+  service_name: string;
   barber_id: string;
   notes?: string;
 }

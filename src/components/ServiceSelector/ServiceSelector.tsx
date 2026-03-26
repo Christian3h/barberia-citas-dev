@@ -9,7 +9,7 @@ import './ServiceSelector.css';
 
 interface ServiceSelectorProps {
   value: string;
-  onChange: (serviceId: string, durationMin: number) => void;
+  onChange: (serviceName: string, durationMin: number) => void;
   disabled?: boolean;
   error?: string;
 }
@@ -24,7 +24,8 @@ export function ServiceSelector({
 
   const handleChange = (serviceId: string) => {
     const service = services.find((s) => s.id === serviceId);
-    onChange(serviceId, service?.duration_min || 30);
+    if (!service) return;
+    onChange(service.name, service.duration_min);
   };
 
   if (loading) {
@@ -39,7 +40,7 @@ export function ServiceSelector({
           <button
             key={service.id}
             type="button"
-            className={`service-option ${value === service.id ? 'selected' : ''}`}
+            className={`service-option ${value === service.name ? 'selected' : ''}`}
             onClick={() => handleChange(service.id)}
             disabled={disabled}
           >

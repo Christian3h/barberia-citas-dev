@@ -263,7 +263,7 @@ function createAppointment(data) {
     barber_id: data.barber_id,
     customer_name: data.customer_name,
     phone: data.phone,
-    service: data.service,
+    service_name: data.service_name,
     date: data.date,
     time: data.time,
     duration_min: serviceDuration,

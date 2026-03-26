@@ -92,8 +92,8 @@ export function BarberPage() {
 
   // Calcular ingresos (apt.service contiene el ID del servicio)
   const revenue = completed.reduce((sum, apt) => {
-    const service = services.find(s => s.id === apt.service || s.name === apt.service);
-    return sum + (service?.price || 0);
+    const service_name = services.find(s => s.id === apt.service_name || s.name === apt.service_name);
+    return sum + (service_name?.price || 0);
   }, 0);
 
   // Siguiente cita
@@ -163,7 +163,7 @@ export function BarberPage() {
             <div className="next-time">{nextAppointment.time}</div>
             <div className="next-details">
               <div className="next-customer">{nextAppointment.customer_name}</div>
-              <div className="next-service">{nextAppointment.service}</div>
+              <div className="next-service">{nextAppointment.service_name}</div>
             </div>
             <button
               className="btn btn-success btn-complete"
@@ -204,7 +204,7 @@ export function BarberPage() {
                       {apt.customer_name}
                     </div>
                     <div className="appointment-service">
-                      {apt.service}
+                      {apt.service_name}
                     </div>
                     <div className="appointment-contact">
                       📱 {apt.phone}
@@ -219,7 +219,7 @@ export function BarberPage() {
                           const phone = String(apt.phone).replace(/\D/g, '');
                           const phoneFormatted = phone.startsWith('57') ? phone : `57${phone}`;
                           const clientName = apt.customer_name?.trim() || 'cliente';
-                          const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${apt.service} - Barbero: ${barber?.name}. Te esperamos!`;
+                          const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${apt.service_name} - Barbero: ${barber?.name}. Te esperamos!`;
                           const url = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
                           window.open(url, '_blank');
                         }}

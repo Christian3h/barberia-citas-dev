@@ -26,7 +26,7 @@ export function DashboardStats({
     .filter(a => a.status === 'done')
     .reduce((sum, a) => {
       const svc = allServices.find(
-        s => s.name === a.service || s.id === a.service
+        s => s.name === a.service_name || s.id === a.service_name  
       )
       return sum + (svc?.price ?? 0)
     }, 0)
@@ -80,7 +80,7 @@ export function DashboardStats({
                   {apt.customer_name}
                 </div>
                 <div className="upcoming-details">
-                  {apt.service} ·{' '}
+                  {apt.service_name} ·{' '}
                   {barbers.find(b => b.id === apt.barber_id)?.name}
                 </div>
               </div>

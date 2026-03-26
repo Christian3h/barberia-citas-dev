@@ -19,7 +19,7 @@ import { formatDisplayDate, timeSlotCollides, calculateEndTime } from '@/utils';
 import './BookingPage.css';
 
 interface BookingFormData {
-  service: string;
+  service_name: string;
   barber_id: string;
   date: string;
   time: string;
@@ -30,7 +30,7 @@ interface BookingFormData {
 }
 
 const initialFormData: BookingFormData = {
-  service: '',
+  service_name: '',
   barber_id: '',
   date: '',
   time: '',
@@ -63,7 +63,7 @@ async function findConflict(formData: BookingFormData) {
 // ─── types ───────────────────────────────────────────────────────────────────
 
 interface FieldErrors {
-  service?: string;
+  service_name ?: string;
   barber_id?: string;
   date?: string;
   time?: string;
@@ -86,8 +86,8 @@ export function BookingPage() {
   // ── field handlers (resetean `time` cuando cambia algo que afecta disponibilidad) ──
 
   const handleServiceChange = (serviceId: string, durationMin: number) => {
-    setFormData((prev) => ({ ...prev, service: serviceId, duration_min: durationMin, time: '' }));
-    setFieldErrors((prev) => ({ ...prev, service: undefined, time: undefined }));
+    setFormData((prev) => ({ ...prev, service_name: serviceId, duration_min: durationMin, time: '' }));
+    setFieldErrors((prev) => ({ ...prev, service_name: undefined, time: undefined }));
   };
 
   const handleBarberChange = (barberId: string) => {
@@ -122,7 +122,7 @@ export function BookingPage() {
    */
   const validateAll = (): FieldErrors => {
     const errors: FieldErrors = {};
-    if (!formData.service)    errors.service     = 'Selecciona un servicio';
+    if (!formData.service_name)    errors.service_name     = 'Selecciona un servicio';
     if (!formData.barber_id)  errors.barber_id   = 'Selecciona un barbero';
     if (!formData.date)       errors.date        = 'Selecciona una fecha';
     if (!formData.time)       errors.time        = 'Selecciona una hora';
@@ -176,11 +176,11 @@ export function BookingPage() {
         customer_name: formData.customer_name,
         phone: formData.phone,
         email: '',
-        service: formData.service,
+        service_name: formData.service_name,
         barber_id: formData.barber_id,
         notes: formData.notes || undefined,
       });
-
+console.log('Create appointment response:', response);
       setShowConfirmation(false);
 
       if (response.success) {
@@ -232,12 +232,12 @@ export function BookingPage() {
       )}
 
       <div className="booking-form">
-        <section className="booking-section" data-field="service">
+        <section className="booking-section" data-field="service_name">
           <h2 className="section-title">1. Elige tu servicio</h2>
           <ServiceSelector
-            value={formData.service}
+            value={formData.service_name}
             onChange={handleServiceChange}
-            error={fieldErrors.service}
+            error={fieldErrors.service_name}
           />
         </section>
 
