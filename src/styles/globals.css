@@ -259,6 +259,47 @@ input::placeholder {
   100% { background-position: 200% 0; }
 }
 
+.watermark {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 10px;
+  border-radius: 8px;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+.watermark:hover {
+  background: rgba(0, 0, 0, 0.7);
+  color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.watermark-logo {
+  height: 16px;
+  width: auto;
+  opacity: 0.9;
+  transition: var(--transition-normal);
+}
+
+.watermark:hover .watermark-logo {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
