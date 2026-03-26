@@ -7,6 +7,7 @@ import type {
   Unavailable,
   AppSettings,
   GetSlotsParams,
+  BlockedDay,
 } from '@/types';
 import {
   generateTimeSlots,
@@ -33,7 +34,8 @@ export function getAvailableSlots(
   params: GetSlotsParams,
   settings: AppSettings,
   appointments: Appointment[],
-  unavailable: Unavailable[]
+  unavailable: Unavailable[],
+  blockedDay: BlockedDay | null
 ): string[] {
   const { date, barber_id, duration_min } = params;
   const {
@@ -42,6 +44,37 @@ export function getAvailableSlots(
     slot_interval_min,
     min_advance_hours = 0,  // Default: 0 horas de anticipación (permite agendar de inmediato)
   } = settings;
+
+  // **NUEVO**: Verificar si el día de la semana está bloqueado permanentemente
+  if (blockedDay) {
+    // 0=Domingo, 1=Lunes, ..., 6=Sábado
+    const dayIndex = new Date(date).getUTCDay(); // UTC para evitar zona horaria local
+    // Convertir a formato del sistema: 1=Lunes ... 7=Domingo
+    // Lunes(1) -> 1, Domingo(0) -> 7
+    const daySystem = dayIndex === 0 ? '7' : dayIndex.toString();
+    
+    // Asegurar que blocked_days sea tratado como string
+    const blockedStr = String(blockedDay.blocked_days || '');
+    const blockedArray = blockedStr.split(',').map(d => d.trim()).filter(Boolean);
+    
+    console.log('🔍 getAvailableSlots BlockedDay Check:', {
+      date,
+      barber_id,
+      blockedDayObject: blockedDay,
+      dayIndex,
+      daySystemConverted: daySystem,
+      blockedDaysString: blockedStr,
+      blockedDaysArray: blockedArray,
+      isCurrentDayBlocked: blockedArray.includes(daySystem)
+    });
+    
+    if (blockedArray.includes(daySystem)) {
+      console.log('✅ BLOQUEADO: Sin horarios disponibles para este día');
+      return []; // El día está bloqueado, no hay slots disponibles
+    }
+  } else {
+    console.log('⚠️ blockedDay es NULL para', { date, barber_id });
+  }
 
   // 1. Generar todos los slots del día
   const allSlots = generateTimeSlots(

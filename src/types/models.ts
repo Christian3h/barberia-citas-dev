@@ -160,3 +160,9 @@ export interface TimeSlot {
   time: string;                  // HH:MM
   available: boolean;
 }
+
+export interface BlockedDay {
+  barber_id: string;
+  /** Comma-separated day numbers, e.g., "1,5" (Monday, Friday) */
+  blocked_days: string;
+}

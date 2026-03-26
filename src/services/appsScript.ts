@@ -10,7 +10,8 @@ import {
   invalidateUsersCache,
   invalidateServicesCache,
   invalidateUnavailableCache,
-  invalidateSettingsCache
+  invalidateSettingsCache,
+  invalidateBlockedDaysCache
 } from './googleSheets';
 import type {
   CreateAppointmentPayload,
@@ -98,6 +99,22 @@ async function fetchAppsScript<T>(
       error: error instanceof Error ? error.message : 'Error de conexión con Apps Script',
     };
   }
+}
+
+/**
+ * Actualiza los días bloqueados para un barbero
+ */
+async function updateBlockedDays(payload: { barber_id: string; blocked_days: string }): Promise<ApiResponse<{ success: boolean }>> {
+  console.log('📤 appsScript.updateBlockedDays: Enviando', payload);
+  const result = await fetchAppsScript<{ success: boolean }>({
+    action: 'updateBlockedDays',
+    payload,
+  });
+  console.log('📥 appsScript.updateBlockedDays: Respuesta', result);
+  if (result.success) {
+    invalidateBlockedDaysCache();
+  }
+  return result;
 }
 
 // ============================================
@@ -370,6 +387,9 @@ export const appsScriptApi = {
   // Unavailable
   createUnavailable,
   deleteUnavailable,
+
+  // Blocked Days
+  updateBlockedDays,
 
   // Settings
   updateSetting,

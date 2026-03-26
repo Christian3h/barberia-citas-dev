@@ -27,6 +27,7 @@ export const GOOGLE_SHEETS_CONFIG = {
     SETTINGS: import.meta.env.VITE_SHEET_SETTINGS,
     ARCHIVE: import.meta.env.VITE_SHEET_ARCHIVE,
     SERVICES: import.meta.env.VITE_SHEET_SERVICES,
+    BLOCKED_DAYS: import.meta.env.VITE_SHEET_BLOCKED_DAYS,
   },
 };
 
