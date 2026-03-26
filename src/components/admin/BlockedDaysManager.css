@@ -14,26 +14,27 @@
 }
 
 .day-selector {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
-  flex-wrap: wrap;
 }
 
 .day-toggle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  padding: var(--spacing-md) var(--spacing-sm);
+  border-radius: var(--border-radius);
   border: 2px solid var(--border-color);
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-normal);
   font-weight: bold;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  height: 48px;
 }
 
 .day-toggle:hover:not(:disabled) {

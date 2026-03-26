@@ -3,13 +3,13 @@ import type { Barber, BlockedDay } from '@/types';
 import './BlockedDaysManager.css';
 
 const WEEK_DAYS = [
-  { id: '1', label: 'L' },
-  { id: '2', label: 'M' },
-  { id: '3', label: 'X' },
-  { id: '4', label: 'J' },
-  { id: '5', label: 'V' },
-  { id: '6', label: 'S' },
-  { id: '7', label: 'D' },
+  { id: '1', label: 'Lunes' },
+  { id: '2', label: 'Martes' },
+  { id: '3', label: 'Miércoles' },
+  { id: '4', label: 'Jueves' },
+  { id: '5', label: 'Viernes' },
+  { id: '6', label: 'Sábado' },
+  { id: '7', label: 'Domingo' },
 ];
 
 interface BlockedDaysManagerProps {
