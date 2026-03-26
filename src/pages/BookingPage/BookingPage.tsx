@@ -4,6 +4,7 @@
 // ============================================
 
 import { useState } from 'react';
+import { FaInstagram } from 'react-icons/fa';
 import {
   ServiceSelector,
   BarberSelector,
@@ -220,12 +221,42 @@ export function BookingPage() {
 
   // ── main render ─────────────────────────────────────────────────────────────
 
+  const openInstagram = () => window.open('https://instagram.com/alex.profesional_barber', '_blank');
+  const openTikTok = () => window.open('https://tiktok.com/@alex_officialbarber', '_blank');
+
   return (
     <div className="booking-page">
       <header className="booking-header">
         <h1>Agenda tu cita</h1>
         <p>Selecciona el servicio, barbero, fecha y hora que prefieras</p>
       </header>
+
+      {/* Sección Sobre Nosotros */}
+      <section className="about-section">
+        <div className="about-content">
+          <h2>💈 Alex Profesional Barber</h2>
+          <p className="about-description">
+            Con años de experiencia en el mundo de la barbería, me especializo en cortes modernos 
+            y clásicos, siempre buscando la perfección en cada detalle. Mi objetivo es que cada cliente 
+            salga feeling seguro y satisfecho con su nuevo look.
+          </p>
+          <div className="about-social">
+            <button className="social-link" onClick={openInstagram}>
+              <FaInstagram size={20} />
+              <span>@alex.profesional_barber</span>
+            </button>
+            <button className="social-link" onClick={openTikTok}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+              </svg>
+              <span>@alex_officialbarber</span>
+            </button>
+          </div>
+          <p className="about-location">
+            📍 Sogamoso, Boyacá
+          </p>
+        </div>
+      </section>
 
       {bookingError && (
         <div className="booking-error">

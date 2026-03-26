@@ -1,6 +1,6 @@
 // ============================================
 // COMPONENTE: CustomerForm
-// Formulario de datos del cliente
+// Formulario de datos del cliente con validaciones reforzadas
 // ============================================
 
 import { useState, useEffect } from 'react';
@@ -20,6 +20,21 @@ interface CustomerFormProps {
     customer_name?: string;
     phone?: string;
   };
+}
+
+// Solo permite números (0-9)
+function sanitizePhone(input: string): string {
+  return input.replace(/[^0-9]/g, '');
+}
+
+// Solo permite letras (con tildes), espacios y caracteres de nombre comunes
+function sanitizeName(input: string): string {
+  return input.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-\.]/g, '');
+}
+
+// Permite letras, números, espacios y signos de puntuación básicos
+function sanitizeNotes(input: string): string {
+  return input.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ.,!¿?\-]/g, '');
 }
 
 function validateColombianPhone(phone: string): { valid: boolean; error: string } {
@@ -76,10 +91,6 @@ export function CustomerForm({
     }
   }, [value.phone, phoneTouched, errors.phone]);
 
-  const handleChange = (field: keyof CustomerData, fieldValue: string) => {
-    onChange({ ...value, [field]: fieldValue });
-  };
-
   const handlePhoneBlur = () => {
     setPhoneTouched(true);
     if (value.phone && !errors.phone) {
@@ -92,9 +103,30 @@ export function CustomerForm({
   const phoneDisplayError = errors.phone || phoneLocalError;
   const nameDisplayError  = errors.customer_name;
 
+  // Handlers con sanitización de entrada
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitized = sanitizeName(e.target.value);
+    onChange({ ...value, customer_name: sanitized });
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitized = sanitizePhone(e.target.value);
+    // Limitar a 10 dígitos
+    const limited = sanitized.slice(0, 10);
+    onChange({ ...value, phone: limited });
+  };
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const sanitized = sanitizeNotes(e.target.value);
+    onChange({ ...value, notes: sanitized });
+  };
+
   return (
     <div className="customer-form">
       <h3 className="customer-form-title">Tus datos</h3>
+      <p className="form-disclaimer">
+        💈 Esta información se usa únicamente para gestionar tu cita de barbería.
+      </p>
 
       <div className="form-group">
         <label htmlFor="customer_name">Nombre completo *</label>
@@ -103,10 +135,11 @@ export function CustomerForm({
           id="customer_name"
           placeholder="Tu nombre"
           value={value.customer_name}
-          onChange={(e) => handleChange('customer_name', e.target.value)}
+          onChange={handleNameChange}
           disabled={disabled}
           className={nameDisplayError ? 'input-error' : ''}
           required
+          maxLength={100}
         />
         {nameDisplayError && (
           <span className="field-error">⚠ {nameDisplayError}</span>
@@ -120,11 +153,13 @@ export function CustomerForm({
           id="phone"
           placeholder="300 123 4567"
           value={value.phone}
-          onChange={(e) => handleChange('phone', e.target.value)}
+          onChange={handlePhoneChange}
           onBlur={handlePhoneBlur}
           disabled={disabled}
           className={phoneDisplayError ? 'input-error' : ''}
           required
+          maxLength={10}
+          inputMode="numeric"
         />
         {phoneDisplayError && (
           <span className="field-error">⚠ {phoneDisplayError}</span>
@@ -138,9 +173,10 @@ export function CustomerForm({
           id="notes"
           placeholder="¿Alguna preferencia o indicación especial?"
           value={value.notes || ''}
-          onChange={(e) => handleChange('notes', e.target.value)}
+          onChange={handleNotesChange}
           disabled={disabled}
           rows={3}
+          maxLength={500}
         />
       </div>
     </div>
