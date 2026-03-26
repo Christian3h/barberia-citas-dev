@@ -12,7 +12,7 @@ interface UseBlockedDaysReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  updateBlockedDays: (barberId: string, blockedDays: string) => Promise<ApiResponse<BlockedDay>>;
+  updateBlockedDays: (barberId: string, blockedDays: string) => Promise<ApiResponse<{ success: boolean }>>;
 }
 
 export function useBlockedDays(): UseBlockedDaysReturn {
@@ -37,14 +37,21 @@ export function useBlockedDays(): UseBlockedDaysReturn {
     fetchBlockedDays();
   }, [fetchBlockedDays]);
 
-  const update = useCallback(async (barberId: string, days: string): Promise<ApiResponse<BlockedDay>> => {
+  const update = useCallback(async (barberId: string, days: string): Promise<ApiResponse<{ success: boolean }>> => {
+    setLoading(true);
+    setError(null);
     try {
-      await appsScriptApi.updateBlockedDays({ barber_id: barberId, blocked_days: days });
-      // Invalidar caché global para que otros hooks (como useSlots) vean los cambios
+      const result = await appsScriptApi.updateBlockedDays({ barber_id: barberId, blocked_days: days });
       googleSheetsService.invalidateBlockedDaysCache();
       await fetchBlockedDays();
-      return { success: true };
+      setLoading(false);
+      if (!result.success) {
+        setError(result.error || 'Error actualizando días bloqueados');
+      }
+      return result;
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error actualizando días bloqueados');
+      setLoading(false);
       return { success: false, error: err instanceof Error ? err.message : 'Error' };
     }
   }, [fetchBlockedDays]);

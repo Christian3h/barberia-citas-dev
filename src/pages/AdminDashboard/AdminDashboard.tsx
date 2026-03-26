@@ -34,7 +34,7 @@ export function AdminDashboard() {
   const { unavailable, loading: loadingUnavailable, createUnavailable, deleteUnavailable } = useUnavailable();
   const { barbers, refetch: refetchBarbers } = useBarbers({ includeInactive: true });
   const { allServices, refetch: refetchServices } = useServices();
-  const { blockedDays, loading: loadingBlockedDays, updateBlockedDays } = useBlockedDays();
+  const { blockedDays, loading: loadingBlockedDays, updateBlockedDays, error } = useBlockedDays();
 
   const appointments = allAppointments.filter(apt => apt.date === selectedDate);
 
@@ -119,12 +119,13 @@ export function AdminDashboard() {
               onDelete={deleteUnavailable}
               loading={loadingUnavailable}
             />
-            <BlockedDaysManager
-              barbers={barbers}
-              blockedDays={blockedDays}
-              onUpdate={updateBlockedDays}
-              loading={loadingBlockedDays}
-            />
+<BlockedDaysManager
+               barbers={barbers}
+               blockedDays={blockedDays}
+               onUpdate={updateBlockedDays}
+               loading={loadingBlockedDays}
+               error={error || undefined}
+             />
           </>
         )}
         {activeTab === 'services' && (
