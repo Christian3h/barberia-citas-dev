@@ -193,7 +193,8 @@ export function isSlotAvailable(
     { date, barber_id: barberId, duration_min: durationMin },
     settings,
     appointments,
-    unavailable
+    unavailable,
+    null
   );
 
   return availableSlots.includes(time);
@@ -227,7 +228,8 @@ export function getNextAvailableSlots(
       { date: dateStr, barber_id: barberId, duration_min: durationMin },
       settings,
       appointments,
-      unavailable
+      unavailable,
+      null
     );
 
     for (const time of slots) {
