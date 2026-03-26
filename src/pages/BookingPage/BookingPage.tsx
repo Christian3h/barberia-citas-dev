@@ -180,7 +180,6 @@ export function BookingPage() {
         barber_id: formData.barber_id,
         notes: formData.notes || undefined,
       });
-console.log('Create appointment response:', response);
       setShowConfirmation(false);
 
       if (response.success) {

@@ -90,7 +90,6 @@ export function BlockedDaysManager({
     setLocalSelectedDays(newSelectedDays);
 
     const blockedStr = Array.from(newSelectedDays).join(',');
-    console.log('🔐 Guardando días bloqueados:', { barber_id: selectedBarber, blocked_days: blockedStr });
     
     await onUpdate(selectedBarber, blockedStr);
   };

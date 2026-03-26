@@ -65,9 +65,7 @@ export function useSlots(options: UseSlotsOptions = {}): UseSlotsReturn {
       try {
         // Verificar si la función existe antes de llamarla
         if (typeof googleSheetsService.getBlockedDaysByBarber === 'function') {
-          console.log('📍 useSlots: Leyendo BlockedDaysByBarber para', fetchParams.barber_id);
           blockedDay = await googleSheetsService.getBlockedDaysByBarber(fetchParams.barber_id);
-          console.log('📍 useSlots: BlockedDay obtenido:', blockedDay);
         }
       } catch (e) {
         console.warn('Error fetching blocked days:', e);

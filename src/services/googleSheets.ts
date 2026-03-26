@@ -488,12 +488,9 @@ export async function getBlockedDays(): Promise<BlockedDay[]> {
  */
 export async function getBlockedDaysByBarber(barberId: string): Promise<BlockedDay | null> {
   const allBlockedDays = await getBlockedDays();
-  console.log('📋 getBlockedDaysByBarber: Leyendo todos los bloqueados', { allBlockedDays, buscandoBarber: barberId });
   const found = allBlockedDays.find(b => {
-    console.log('  → Comparando:', { stored_barber_id: b.barber_id, requested_barber_id: barberId, match: String(b.barber_id) === String(barberId) });
     return String(b.barber_id) === String(barberId);
   });
-  console.log('📋 getBlockedDaysByBarber: Resultado', { found });
   return found || null;
 }
 

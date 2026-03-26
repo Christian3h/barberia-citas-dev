@@ -57,24 +57,10 @@ export function getAvailableSlots(
     const blockedStr = String(blockedDay.blocked_days || '');
     const blockedArray = blockedStr.split(',').map(d => d.trim()).filter(Boolean);
     
-    console.log('🔍 getAvailableSlots BlockedDay Check:', {
-      date,
-      barber_id,
-      blockedDayObject: blockedDay,
-      dayIndex,
-      daySystemConverted: daySystem,
-      blockedDaysString: blockedStr,
-      blockedDaysArray: blockedArray,
-      isCurrentDayBlocked: blockedArray.includes(daySystem)
-    });
-    
     if (blockedArray.includes(daySystem)) {
-      console.log('✅ BLOQUEADO: Sin horarios disponibles para este día');
       return []; // El día está bloqueado, no hay slots disponibles
     }
-  } else {
-    console.log('⚠️ blockedDay es NULL para', { date, barber_id });
-  }
+  } 
 
   // 1. Generar todos los slots del día
   const allSlots = generateTimeSlots(

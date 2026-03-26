@@ -105,12 +105,10 @@ async function fetchAppsScript<T>(
  * Actualiza los días bloqueados para un barbero
  */
 async function updateBlockedDays(payload: { barber_id: string; blocked_days: string }): Promise<ApiResponse<{ success: boolean }>> {
-  console.log('📤 appsScript.updateBlockedDays: Enviando', payload);
   const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateBlockedDays',
     payload,
   });
-  console.log('📥 appsScript.updateBlockedDays: Respuesta', result);
   if (result.success) {
     invalidateBlockedDaysCache();
   }
