@@ -84,7 +84,7 @@ export function BarbersManager({
 
     return (
       <div className="admin-section">
-        <div className="section-header">
+        <div className="section-header" style={{ display: 'none' }}>
           <h2>💈 Barberos</h2>
           <button className="btn btn-primary" onClick={() => { resetForm(); setShowForm(!showForm); }}>
             {showForm ? 'Cancelar' : '+ Nuevo barbero'}
@@ -178,6 +178,7 @@ export function BarbersManager({
                       className="btn btn-small btn-danger"
                       onClick={() => setDeletingBarber(barber)}
                       title="Eliminar barbero"
+                      style={{ display: 'none' }}
                     >
                       🗑️
                     </button>

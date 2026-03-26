@@ -23,7 +23,7 @@ function Navigation() {
   return (
     <nav className="main-nav">
       <Link to={destination} className="nav-brand">
-        <img src="/src/assets/images/LogoBlanco.PNG" style={{ width: '200px', height: 'auto' }} alt="Logo" /> 
+        <img src="/images/LogoBlanco.PNG" style={{ width: '200px' }} alt="Logo" /> 
       </Link>
     </nav>
   );
