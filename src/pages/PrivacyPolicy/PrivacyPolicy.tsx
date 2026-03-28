@@ -2,7 +2,7 @@
 // PÁGINA: Política de Privacidad
 // ============================================
 
-import { FaUserShield, FaLock, FaEye, FaCheckCircle } from 'react-icons/fa';
+import { FaShieldAlt, FaLock, FaEye, FaCheckCircle } from 'react-icons/fa';
 import { FiArrowLeft } from 'react-icons/fi';
 import './PrivacyPolicy.css';
 
@@ -26,7 +26,7 @@ export function PrivacyPolicy() {
         </button>
 
         <header className="privacy-header">
-          <FaUserShield className="privacy-icon" size={48} />
+          <FaShieldAlt className="privacy-icon" size={48} />
           <h1>Política de Privacidad</h1>
           <p className="privacy-date">Última actualización: {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </header>
@@ -50,7 +50,7 @@ export function PrivacyPolicy() {
         </section>
 
         <section className="privacy-section">
-          <h2><FaUserShield size={20} /> Cómo usamos su información</h2>
+          <h2><FaShieldAlt size={20} /> Cómo usamos su información</h2>
           <p>Utilizamos su información exclusivamente para:</p>
           <ul>
             <li>Gestionar y confirmar sus citas de barbería.</li>
