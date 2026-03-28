@@ -256,12 +256,7 @@ function getServiceDuration(serviceId) {
 }
 
 function createAppointment(data) {
-  // DEBUG: Log de los datos recibidos
-  Logger.log('createAppointment - data recibida: ' + JSON.stringify(data));
-  
-  // Obtener la duración del servicio desde la tabla Services
   const serviceDuration = getServiceDuration(data.service_name);
-  Logger.log('createAppointment - serviceDuration: ' + serviceDuration);
   
   const appointmentData = {
     barber_id: data.barber_id,
@@ -276,11 +271,7 @@ function createAppointment(data) {
     notes: data.notes || ''
   };
   
-  Logger.log('createAppointment - appointmentData: ' + JSON.stringify(appointmentData));
-  
-  const result = insertRow('Appointments', appointmentData);
-  Logger.log('createAppointment - resultado: ' + JSON.stringify(result));
-  return result;
+  return insertRow('Appointments', appointmentData);
 }
 
 function updateAppointmentStatus(id, status) {
