@@ -257,13 +257,13 @@ function getServiceDuration(serviceId) {
 
 function createAppointment(data) {
   // Obtener la duración del servicio desde la tabla Services
-  const serviceDuration = getServiceDuration(data.service);
+  const serviceDuration = getServiceDuration(data.service_name);
   
   const appointmentData = {
     barber_id: data.barber_id,
     customer_name: data.customer_name,
     phone: data.phone,
-    service_name: data.service,
+    service_name: data.service_name,
     date: data.date,
     time: data.time,
     duration_min: serviceDuration,
