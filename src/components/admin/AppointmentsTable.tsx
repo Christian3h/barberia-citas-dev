@@ -74,7 +74,7 @@ export function AppointmentsTable ({
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((apt) => {
+                {appointments.sort((a, b) => a.time.localeCompare(b.time)).map((apt) => {
                   // Buscar el nombre del servicio por ID o por nombre
                   const serviceName = allServices.find(s => s.id === apt.service_name)?.name || apt.service_name;
                   return (
