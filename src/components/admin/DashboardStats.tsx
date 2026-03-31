@@ -26,8 +26,8 @@ export function DashboardStats({
     .filter(a => a.status === 'done')
     .reduce((sum, a) => {
       const svc = allServices.find(
-        s => s.name === a.service_name || s.id === a.service_name  
-      )
+      s => s.name.trim() === a.service_name.trim()
+  )
       return sum + (svc?.price ?? 0)
     }, 0)
 
