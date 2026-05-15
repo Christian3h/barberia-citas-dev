@@ -114,11 +114,10 @@ export function AppointmentsTable ({
                         <button
                           className="btn btn-small btn-whatsapp"
                           onClick={() => {
-                            const barberName = barbers.find(b => b.id === apt.barber_id)?.name || 'tu barbero';
                             const phone = String(apt.phone).replace(/\D/g, '');
                             const phoneFormatted = phone.startsWith('57') ? phone : `57${phone}`;
                             const clientName = apt.customer_name?.trim() || 'cliente';
-                            const message = `Hola ${clientName}! Te recordamos tu cita: Fecha: ${apt.date} - Hora: ${apt.time} - Servicio: ${serviceName} - Barbero: ${barberName}. Te esperamos!`;
+                            const message = `Hola ${clientName}! \nTienes una cita agendada para el día ${apt.date} a las ${apt.time}.\n\n¿Deseas confirmarla?`;
                             const url = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
                             window.open(url, '_blank');
                           }}
