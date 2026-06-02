@@ -6,7 +6,7 @@ import { FaShieldAlt, FaLock, FaEye, FaCheckCircle } from 'react-icons/fa';
 import { FiArrowLeft } from 'react-icons/fi';
 import './PrivacyPolicy.css';
 
-const PRIGMA_URL = 'https://prigma.onrender.com';
+const PRIGMA_URL = 'https://prigma.net';
 
 export function PrivacyPolicy() {
   const goBack = () => {

@@ -211,7 +211,7 @@ export function BookingPage() {
             Agendar otra cita
           </button>
         </div>        
-        <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+        <a href="https://prigma.net/" target="_blank" rel="noopener noreferrer" className="watermark">
           <img src="/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
           <span>Made by Prigma</span>
         </a>      
@@ -348,7 +348,7 @@ export function BookingPage() {
         onCancel={() => !isSubmitting && setShowConfirmation(false)}
         loading={isSubmitting}
       />
-      <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+      <a href="https://prigma.net/" target="_blank" rel="noopener noreferrer" className="watermark">
         <img src="/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
         <span>Made by Prigma</span>
       </a>
