@@ -179,6 +179,15 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.confirmed-appointment-datetime {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.confirmed-appointment-datetime--error {
+  color: var(--color-error);
+}
+
 .booking-success .btn {
   margin-top: var(--spacing-lg);
 }

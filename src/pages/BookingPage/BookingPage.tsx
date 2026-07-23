@@ -30,6 +30,11 @@ interface BookingFormData {
   notes: string;
 }
 
+interface ConfirmedAppointmentInfo {
+  date: string;
+  time: string;
+}
+
 const initialFormData: BookingFormData = {
   service_name: '',
   barber_id: '',
@@ -79,6 +84,9 @@ export function BookingPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [confirmedAppointmentInfo, setConfirmedAppointmentInfo] = useState<ConfirmedAppointmentInfo | null>(null);
+  const [isLoadingConfirmedAppointmentInfo, setIsLoadingConfirmedAppointmentInfo] = useState(false);
+  const [confirmedAppointmentInfoError, setConfirmedAppointmentInfoError] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -159,6 +167,8 @@ export function BookingPage() {
 
     setIsSubmitting(true);
     setBookingError(null);
+    setConfirmedAppointmentInfo(null);
+    setConfirmedAppointmentInfoError(null);
 
     try {
       const conflict = await findConflict(formData);
@@ -184,6 +194,25 @@ export function BookingPage() {
       setShowConfirmation(false);
 
       if (response.success) {
+        const createdAppointmentId = response.data?.id;
+
+        if (createdAppointmentId) {
+          setIsLoadingConfirmedAppointmentInfo(true);
+          const createdAppointment = await googleSheetsService.getAppointmentById(createdAppointmentId);
+
+          if (createdAppointment) {
+            setConfirmedAppointmentInfo({
+              date: createdAppointment.date,
+              time: createdAppointment.time,
+            });
+          } else {
+            setConfirmedAppointmentInfoError('No fue posible consultar la fecha y hora de la cita agendada.');
+          }
+          setIsLoadingConfirmedAppointmentInfo(false);
+        } else {
+          setConfirmedAppointmentInfoError('No fue posible consultar la fecha y hora de la cita agendada.');
+        }
+
         setBookingSuccess(true);
         setFormData(initialFormData);
       } else {
@@ -191,6 +220,7 @@ export function BookingPage() {
       }
     } catch {
       setShowConfirmation(false);
+      setIsLoadingConfirmedAppointmentInfo(false);
       setBookingError('Error de conexión. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
@@ -205,9 +235,29 @@ export function BookingPage() {
         <div className="booking-success">
           <div className="success-icon">✓</div>
           <h2>¡Cita Agendada!</h2>
+          {isLoadingConfirmedAppointmentInfo && (
+            <p className="confirmed-appointment-datetime">Consultando fecha y hora de tu cita...</p>
+          )}
+          {confirmedAppointmentInfo && (
+            <p className="confirmed-appointment-datetime">
+              📅 {formatDisplayDate(confirmedAppointmentInfo.date)} - 🕐 {confirmedAppointmentInfo.time}
+            </p>
+          )}
+          {confirmedAppointmentInfoError && (
+            <p className="confirmed-appointment-datetime confirmed-appointment-datetime--error">
+              {confirmedAppointmentInfoError}
+            </p>
+          )}
           <p>Tu cita ha sido confirmada exitosamente.</p>
-          <p>Te enviaremos un recordatorio por WhatsApp.</p>
-          <button className="btn btn-primary" onClick={() => setBookingSuccess(false)}>
+          <p>Muestrale la captura de este apartado a tu barbero.</p>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setBookingSuccess(false);
+              setConfirmedAppointmentInfo(null);
+              setConfirmedAppointmentInfoError(null);
+            }}
+          >
             Agendar otra cita
           </button>
         </div>        
