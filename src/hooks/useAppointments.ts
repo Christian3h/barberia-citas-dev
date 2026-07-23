@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Appointment, CreateAppointmentPayload, ApiResponse } from '@/types';
-import { googleSheetsService, appsScriptApi } from '@/services';
+import { googleSheetsService, appsScriptApi, evolutionApiService } from '@/services';
 import { cache } from '@/services/cache';
 
 interface UseAppointmentsOptions {
@@ -76,21 +76,35 @@ export function useAppointments(
 
   const create = useCallback(async (payload: CreateAppointmentPayload) => {
     try {
-      // Invalidar caché antes de crear para asegurar validación con datos frescos
       cache.invalidate('appointments');
       
       const response = await appsScriptApi.createAppointment(payload);
       
-      // Siempre invalidar caché después de intentar crear (éxito o fallo)
-      // Esto asegura que otros usuarios vean los datos actualizados
       googleSheetsService.invalidateAppointmentsCache();
       
       if (response.success) {
         await fetchAppointments();
+        
+        // Enviar confirmación por WhatsApp
+        try {
+          const barbers = await googleSheetsService.getBarbers();
+          const barber = barbers.find(b => b.id === payload.barber_id);
+          const barberName = barber?.name || payload.barber_id;
+          
+          await evolutionApiService.sendAppointmentConfirmation(
+            payload.customer_name,
+            payload.phone,
+            payload.date,
+            payload.time,
+            payload.service_name,
+            barberName,
+          );
+        } catch (whatsappError) {
+          console.warn('No se pudo enviar WhatsApp de confirmación:', whatsappError);
+        }
       }
       return response;
     } catch (err) {
-      // Invalidar caché incluso en caso de error
       googleSheetsService.invalidateAppointmentsCache();
       return {
         success: false,

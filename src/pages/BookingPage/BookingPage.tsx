@@ -210,11 +210,11 @@ export function BookingPage() {
           <button className="btn btn-primary" onClick={() => setBookingSuccess(false)}>
             Agendar otra cita
           </button>
-        </div>        
-        <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+        </div>
+        <a href="https://prigma.net/" target="_blank" rel="noopener noreferrer" className="watermark">
           <img src="/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
           <span>Made by Prigma</span>
-        </a>      
+        </a>
       </div>
     );
   }
@@ -236,8 +236,8 @@ export function BookingPage() {
         <div className="about-content">
           <h2>💈 Alex Profesional Barber</h2>
           <p className="about-description">
-            Con años de experiencia en el mundo de la barbería, me especializo en cortes modernos 
-            y clásicos, siempre buscando la perfección en cada detalle. Mi objetivo es que cada cliente 
+            Con años de experiencia en el mundo de la barbería, me especializo en cortes modernos
+            y clásicos, siempre buscando la perfección en cada detalle. Mi objetivo es que cada cliente
             salga feeling seguro y satisfecho con su nuevo look.
           </p>
           <div className="about-social">
@@ -348,7 +348,7 @@ export function BookingPage() {
         onCancel={() => !isSubmitting && setShowConfirmation(false)}
         loading={isSubmitting}
       />
-      <a href="https://prigma.onrender.com/" target="_blank" rel="noopener noreferrer" className="watermark">
+      <a href="https://prigma.net/" target="_blank" rel="noopener noreferrer" className="watermark">
         <img src="/images/prigma.PNG" alt="Prigma" className="watermark-logo" />
         <span>Made by Prigma</span>
       </a>
