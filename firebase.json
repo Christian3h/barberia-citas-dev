@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "barberia-elite-838bf",
+    "site": "barberia-cotas",
     "public": "dist",
     "ignore": [
       "firebase.json",

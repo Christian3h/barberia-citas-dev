@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
-  authDomain: "barberia-7841d.firebaseapp.com",
-  projectId: "barberia-7841d",
-  storageBucket: "barberia-7841d.firebasestorage.app",
-  messagingSenderId: "107382493890",
-  appId: "1:107382493890:web:73633d612a1940a338215b",
-  measurementId: "G-6PHRG0G9BD"
+  apiKey: "AIzaSyA50Akf_FC6eR8hh-FwPfSUw1PyCYd5ESQ",
+  authDomain: "barberia-cotas.firebaseapp.com",
+  projectId: "barberia-cotas",
+  storageBucket: "barberia-cotas.firebasestorage.app",
+  messagingSenderId: "801708801389",
+  appId: "1:801708801389:web:ae8fdab41f42ee1379ae64",
+  measurementId: "G-5NW4Y1W9GB"
 };
 
 // Initialize Firebase

@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_SHEET_ARCHIVE: string;
   readonly VITE_SHEET_SERVICES: string;
   readonly VITE_APPS_SCRIPT_URL: string;
+  readonly VITE_APPS_SCRIPT_API_KEY: string;
   readonly VITE_WULSHIS_URL: string;
 }
 

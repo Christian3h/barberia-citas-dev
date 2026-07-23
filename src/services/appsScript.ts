@@ -21,6 +21,7 @@ import type {
 } from '@/types';
 
 const APPS_SCRIPT_URL = GOOGLE_SHEETS_CONFIG.APPS_SCRIPT_URL;
+const APPS_SCRIPT_API_KEY = GOOGLE_SHEETS_CONFIG.APPS_SCRIPT_API_KEY;
 
 /**
  * Verifica si Apps Script está configurado
@@ -47,7 +48,8 @@ async function fetchAppsScript<T>(
   try {
     // ✅ FIX: Codificar payload en la URL y usar GET sin headers
     const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-    const url = `${APPS_SCRIPT_URL}?payload=${encodedPayload}`;
+    const keyParam = APPS_SCRIPT_API_KEY ? `&key=${APPS_SCRIPT_API_KEY}` : '';
+    const url = `${APPS_SCRIPT_URL}?payload=${encodedPayload}${keyParam}`;
 
     const response = await fetch(url, {
       method: 'GET',

@@ -34,8 +34,8 @@ export function PrivacyPolicy() {
         <section className="privacy-section">
           <h2><FaLock size={20} /> Introducción</h2>
           <p>
-            En <strong>Alex Profesional Barber</strong>, valoramos y respetamos su privacidad. 
-            Esta política de privacidad describe cómo recopilamos, usamos, almacenamos y 
+            En <strong>Alex Profesional Barber</strong>, valoramos y respetamos su privacidad.
+            Esta política de privacidad describe cómo recopilamos, usamos, almacenamos y
             protegemos su información personal cuando utiliza nuestro sistema de agendamiento de citas.
           </p>
         </section>
@@ -62,7 +62,7 @@ export function PrivacyPolicy() {
         <section className="privacy-section">
           <h2><FaLock size={20} /> Protección de datos</h2>
           <p>
-            Implementamos medidas de seguridad técnicas y organizativas para proteger 
+            Implementamos medidas de seguridad técnicas y organizativas para proteger
             su información personal contra accesos no autorizados, divulgación o modificación.
             Sus datos se almacenan de forma segura y no se comparten con terceros no autorizados.
           </p>
@@ -82,7 +82,7 @@ export function PrivacyPolicy() {
         <section className="privacy-section">
           <h2>Contacto</h2>
           <p>
-            Si tiene preguntas sobre esta política de privacidad o desea ejercer sus derechos, 
+            Si tiene preguntas sobre esta política de privacidad o desea ejercer sus derechos,
             puede contactar al desarrollador del sistema:
           </p>
           <div className="contact-info">
@@ -94,7 +94,7 @@ export function PrivacyPolicy() {
 
         <footer className="privacy-footer">
           <p>
-            Al utilizar nuestro sistema de agendamiento, usted acepta los términos 
+            Al utilizar nuestro sistema de agendamiento, usted acepta los términos
             descritos en esta política de privacidad.
           </p>
         </footer>

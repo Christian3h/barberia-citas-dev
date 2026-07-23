@@ -2,6 +2,7 @@ export { default as googleSheetsService } from './googleSheets';
 export { default as api } from './api';
 export { default as slotsService } from './slots';
 export { default as appsScriptApi } from './appsScript';
+export { default as evolutionApiService } from './evolutionApi';
 export { cache } from './cache';
 
 // Re-export específicos para evitar conflictos

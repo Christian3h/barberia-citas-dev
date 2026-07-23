@@ -19,6 +19,9 @@ export const GOOGLE_SHEETS_CONFIG = {
   // URL del Web App de Apps Script para escritura
   APPS_SCRIPT_URL: import.meta.env.VITE_APPS_SCRIPT_URL,
 
+  // API Key para autenticar requests al Web App (si esta configurada en Apps Script)
+  APPS_SCRIPT_API_KEY: import.meta.env.VITE_APPS_SCRIPT_API_KEY,
+
   // Nombres de las hojas (deben coincidir exactamente con Google Sheets)
   SHEETS: {
     APPOINTMENTS: import.meta.env.VITE_SHEET_APPOINTMENTS,
@@ -47,6 +50,15 @@ export const WULSHIS_CONFIG = {
     USERS: '/api/users',
     SERVICES: '/api/services',
   },
+};
+
+/**
+ * Configuración de Evolution API (WhatsApp)
+ */
+export const EVOLUTION_API_CONFIG = {
+  BASE_URL: import.meta.env.VITE_EVOLUTION_API_URL,
+  API_KEY: import.meta.env.VITE_EVOLUTION_API_KEY,
+  INSTANCE_NAME: import.meta.env.VITE_EVOLUTION_INSTANCE_NAME,
 };
 
 /**
