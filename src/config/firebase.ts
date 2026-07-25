@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA50Akf_FC6eR8hh-FwPfSUw1PyCYd5ESQ",
-  authDomain: "barberia-cotas.firebaseapp.com",
-  projectId: "barberia-cotas",
-  storageBucket: "barberia-cotas.firebasestorage.app",
-  messagingSenderId: "801708801389",
-  appId: "1:801708801389:web:ae8fdab41f42ee1379ae64",
-  measurementId: "G-5NW4Y1W9GB"
+  apiKey: "AIzaSyD2mRu9hp8JeayIffm01XKsI82LJ9f7_2Y",
+  authDomain: "barberia-elite-838bf.firebaseapp.com",
+  projectId: "barberia-elite-838bf",
+  storageBucket: "barberia-elite-838bf.firebasestorage.app",
+  messagingSenderId: "298314847993",
+  appId: "1:298314847993:web:deb21be08725a0d105f428",
+  measurementId: "G-WMDCKS1XK5"
 };
 
 // Initialize Firebase
