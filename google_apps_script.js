@@ -44,11 +44,6 @@
 // LOGGING ESTRUCTURADO
 // ============================================
 
-/**
- * Logger centralizado con niveles.
- * Uso: log('INFO', 'reminders', 'Procesando cita', { id: '...' })
- * En producción filtra por nivel mínimo definido en LOG_LEVEL.
- */
 const LOG_LEVEL = 'INFO'; // 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
 
 const LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
@@ -64,11 +59,6 @@ function log(level, context, message, data) {
 // CONFIGURACIÓN — PropertiesService
 // ============================================
 
-/**
- * Obtiene SOLO las credenciales sensibles desde PropertiesService.
- * URL e instancia de Evolution van en la hoja Settings (no son secretas).
- * NUNCA guardar API keys en la hoja — son visibles para cualquiera con acceso al spreadsheet.
- */
 function getConfig() {
   const props = PropertiesService.getScriptProperties();
   return {
@@ -78,17 +68,11 @@ function getConfig() {
   };
 }
 
-/**
- * Inicializa PropertiesService con las credenciales secretas.
- * Ejecutar UNA VEZ con los valores reales antes de usar la app.
- *
- * EVOLUTION_API_URL e INSTANCE_NAME van en la hoja Settings, NO aquí.
- */
 function setupConfig() {
   const props = PropertiesService.getScriptProperties();
   props.setProperties({
     RESEND_API_KEY:    're_TU_API_KEY_AQUI',
-    EVOLUTION_API_KEY: 'miclaveultrasecreta123',
+    EVOLUTION_API_KEY: 'Malditogoogle2020Alex',
     WEB_APP_API_KEY:   Utilities.getUuid()
   });
   log('INFO', 'setup', 'Config inicializada', {
@@ -100,30 +84,17 @@ function setupConfig() {
 // SETUP DE SETTINGS EN LA HOJA
 // ============================================
 
-/**
- * Agrega los settings requeridos por v2.0 a la hoja Settings.
- * Ejecutar UNA VEZ después de actualizar el script.
- * No sobreescribe valores existentes.
- *
- * Incluye evolution_api_url e instance_name — van aquí porque no son secretos.
- * Las API keys secretas van en PropertiesService (setupConfig).
- */
 function setupSheetSettings() {
   const defaults = [
-    // --- Evolution API (no secretos) ---
     ['evolution_api_url',           'http://evolution-api-7ff8.onrender.com', 'URL de tu servidor Evolution API'],
     ['instance_name',               'mi wasa',                                'Nombre de la instancia de WhatsApp'],
-    // --- Timezone ---
     ['timezone_offset',             -5,    'Offset UTC de la barbería (Colombia = -5)'],
-    // --- Purga ---
     ['purge_after_days',            7,     'Días para purgar citas done/cancelled'],
     ['purge_scheduled_after_days',  3,     'Días para purgar citas scheduled antiguas'],
-    // --- Ventanas de recordatorio ---
     ['reminder_60_upper',           65,    'Minuto superior ventana recordatorio 1h'],
     ['reminder_60_lower',           50,    'Minuto inferior ventana recordatorio 1h'],
     ['reminder_15_upper',           20,    'Minuto superior ventana recordatorio 15min'],
     ['reminder_15_lower',           5,     'Minuto inferior ventana recordatorio 15min'],
-    // --- Email (feature flag) ---
     ['email_enabled',               false, 'Activar envío de emails via Resend (true/false)']
   ];
 
@@ -150,75 +121,45 @@ function setupSheetSettings() {
 // UTILIDADES DE FECHA — Fuente de verdad única
 // ============================================
 
-/**
- * Parsea date + time como string y retorna un objeto Date
- * correctamente ajustado al timezone de la barbería.
- *
- * Maneja los 3 formatos que Google Sheets puede devolver:
- *   1. String ISO:    "2026-06-02T00:10:00.000Z"
- *   2. String simple: "2026-06-02" + "08:30"
- *   3. Número decimal: 0.395833 (fracción de día — formato interno de Sheets para horas)
- *   4. Objeto Date:   ya parseado por Sheets (viene en UTC)
- *
- * @param {string|Date} dateInput  - Fecha (string "YYYY-MM-DD" o Date)
- * @param {string|number} timeInput - Hora (string "HH:MM", número decimal, o ignorado si dateInput es ISO completo)
- * @param {number} tzOffset        - Offset UTC de la zona horaria (ej: -5 para Colombia)
- * @returns {Date|null} Objeto Date en UTC representando el momento correcto, o null si falla
- */
 function parseDatetimeBogota(dateInput, timeInput, tzOffset) {
-  // Offset por defecto: Colombia UTC-5
   const offset = typeof tzOffset === 'number' ? tzOffset : -5;
-
   try {
-    // --- Caso 1: dateInput ya es un ISO completo con Z (viene de datetime_iso en Sheets) ---
     if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.endsWith('Z')) {
       const d = new Date(dateInput);
       return isNaN(d.getTime()) ? null : d;
     }
 
-    // --- Normalizar datePart a "YYYY-MM-DD" ---
     let datePart;
     if (dateInput instanceof Date) {
-      // Sheets devuelve Date en UTC — extraer componentes UTC para evitar drift de día
       const y = dateInput.getUTCFullYear();
       const m = String(dateInput.getUTCMonth() + 1).padStart(2, '0');
       const d = String(dateInput.getUTCDate()).padStart(2, '0');
       datePart = `${y}-${m}-${d}`;
     } else {
-      // String "YYYY-MM-DD" o "DD/MM/YYYY" — normalizar
       datePart = String(dateInput).trim();
-      // Convertir DD/MM/YYYY → YYYY-MM-DD si aplica
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(datePart)) {
         const parts = datePart.split('/');
         datePart = `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
     }
 
-    // --- Normalizar timePart a "HH:MM" ---
     let timePart;
     if (typeof timeInput === 'number') {
-      // Número decimal de Sheets: 0.395833 = 9h 30m
-      // Fórmula: totalMinutes = round(decimal * 1440)
       const totalMinutes = Math.round(timeInput * 1440);
       const hh = Math.floor(totalMinutes / 60);
       const mm = totalMinutes % 60;
       timePart = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
     } else if (timeInput instanceof Date) {
-      // Sheets a veces devuelve la hora como Date con fecha base 30/12/1899
       const hh = String(timeInput.getHours()).padStart(2, '0');
       const mm = String(timeInput.getMinutes()).padStart(2, '0');
       timePart = `${hh}:${mm}`;
     } else {
-      // String "HH:MM" o "H:MM" — normalizar
       timePart = String(timeInput).trim();
-      // Asegurar formato HH:MM
       if (/^\d{1}:\d{2}$/.test(timePart)) {
         timePart = '0' + timePart;
       }
     }
 
-    // --- Construir timestamp con offset correcto ---
-    // Formato: "YYYY-MM-DDTHH:MM±HH:00"
     const sign = offset >= 0 ? '+' : '-';
     const absOffset = Math.abs(offset);
     const offsetStr = `${sign}${String(absOffset).padStart(2, '0')}:00`;
@@ -229,39 +170,19 @@ function parseDatetimeBogota(dateInput, timeInput, tzOffset) {
       log('WARN', 'parseDatetime', 'Fecha inválida construida', { dateInput, timeInput, isoString });
       return null;
     }
-
     return result;
-
   } catch (e) {
     log('ERROR', 'parseDatetime', 'Excepción al parsear fecha', { dateInput, timeInput, error: e.message });
     return null;
   }
 }
 
-/**
- * Retorna la fecha actual en la zona horaria de la barbería.
- * Se usa como "ahora" en comparaciones de purga y recordatorios.
- *
- * @param {number} tzOffset - Offset UTC (ej: -5)
- * @returns {Date} Objeto Date en UTC representando "ahora" local
- */
 function getNowBogota(tzOffset) {
-  // new Date() siempre retorna UTC internamente — no necesita ajuste
-  // El offset solo importa cuando interpretamos componentes (año, mes, día, hora)
   return new Date();
 }
 
-/**
- * Formatea un objeto Date a string "YYYY-MM-DD" en la zona horaria dada.
- * Útil para comparaciones de día sin importar la hora.
- *
- * @param {Date} date
- * @param {number} tzOffset
- * @returns {string} "YYYY-MM-DD"
- */
 function formatDateLocal(date, tzOffset) {
   const offset = typeof tzOffset === 'number' ? tzOffset : -5;
-  // Ajustar el Date al offset local para extraer componentes correctos
   const localMs = date.getTime() + offset * 3600000;
   const localDate = new Date(localMs);
   const y = localDate.getUTCFullYear();
@@ -274,72 +195,50 @@ function formatDateLocal(date, tzOffset) {
 // SETTINGS — Lectura y escritura
 // ============================================
 
-/**
- * Obtiene todos los settings como objeto clave-valor.
- * Lee la hoja una sola vez — cachear el resultado en el caller si se usa en loop.
- */
 function getSettings() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Settings');
-
   if (!sheet) return { error: 'Hoja Settings no encontrada' };
-
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { success: true, data: {} };
-
   const settings = {};
   for (let i = 1; i < data.length; i++) {
     const key = String(data[i][0]).trim();
     if (key) settings[key] = data[i][1];
   }
-
   return { success: true, data: settings };
 }
 
-/**
- * Actualiza o crea un setting en la hoja.
- */
 function updateSetting(key, value) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Settings');
   if (!sheet) return { error: 'Hoja Settings no encontrada' };
-
   const data = sheet.getDataRange().getValues();
   const keyStr = String(key).trim();
-
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]).trim() === keyStr) {
       sheet.getRange(i + 1, 2).setValue(value);
       return { success: true, key: keyStr, value };
     }
   }
-
   sheet.appendRow([keyStr, value, '']);
   return { success: true, key: keyStr, value, created: true };
 }
 
-/**
- * Retorna solo los settings que son seguros para exponer públicamente
- * (sin credenciales ni configuración interna sensible).
- */
 function getPublicSettings() {
   const result = getSettings();
   if (!result.success) return result;
-
-  // Keys que el frontend necesita conocer
   const PUBLIC_KEYS = [
     'business_name', 'business_phone', 'business_address',
     'open_time', 'close_time', 'slot_duration_min',
     'timezone_offset'
   ];
-
   const publicData = {};
   for (const key of PUBLIC_KEYS) {
     if (result.data[key] !== undefined) {
       publicData[key] = result.data[key];
     }
   }
-
   return { success: true, data: publicData };
 }
 
@@ -351,21 +250,16 @@ function insertRow(sheetName, data, autoId = true) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return { error: `Hoja "${sheetName}" no encontrada` };
-
   const lastCol = sheet.getLastColumn();
   if (lastCol === 0) return { error: `La hoja "${sheetName}" no tiene columnas` };
-
   const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
   if (!headers[0]) return { error: `La hoja "${sheetName}" no tiene headers válidos` };
-
   const id = autoId ? Utilities.getUuid() : (data.id || Utilities.getUuid());
-
   const newRow = headers.map(header => {
     if (header === 'id')         return id;
     if (header === 'created_at') return new Date().toISOString();
     return data[header] !== undefined ? data[header] : '';
   });
-
   sheet.appendRow(newRow);
   return { success: true, id, data };
 }
@@ -374,12 +268,10 @@ function updateRow(sheetName, id, updates) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return { error: `Hoja "${sheetName}" no encontrada` };
-
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const idCol = headers.indexOf('id');
   if (idCol === -1) return { error: 'No se encontró columna "id"' };
-
   const idStr = String(id).trim();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idCol]).trim() === idStr) {
@@ -390,7 +282,6 @@ function updateRow(sheetName, id, updates) {
       return { success: true, id: idStr };
     }
   }
-
   return { error: `No se encontró registro con id: ${idStr}` };
 }
 
@@ -398,12 +289,10 @@ function deleteRow(sheetName, id) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return { error: `Hoja "${sheetName}" no encontrada` };
-
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const idCol = headers.indexOf('id');
   if (idCol === -1) return { error: 'No se encontró columna "id"' };
-
   const idStr = String(id).trim();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idCol]).trim() === idStr) {
@@ -411,7 +300,6 @@ function deleteRow(sheetName, id) {
       return { success: true, id: idStr };
     }
   }
-
   return { error: `No se encontró registro con id: ${idStr}` };
 }
 
@@ -419,23 +307,19 @@ function getAll(sheetName, filters = {}) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return { error: `Hoja "${sheetName}" no encontrada` };
-
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { success: true, data: [] };
-
   const headers = data[0];
   let records = data.slice(1).map(row => {
     const obj = {};
     headers.forEach((header, i) => { obj[header] = row[i]; });
     return obj;
   });
-
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== '') {
       records = records.filter(r => r[key] == value);
     }
   }
-
   return { success: true, data: records };
 }
 
@@ -443,26 +327,10 @@ function getAll(sheetName, filters = {}) {
 // VALIDACIÓN DE TELÉFONO
 // ============================================
 
-/**
- * Normaliza y valida un número de teléfono colombiano para Evolution API.
- * Formato requerido: 57XXXXXXXXXX (12 dígitos, sin +, sin espacios)
- *
- * Acepta:
- *   3XXXXXXXXX    → 573XXXXXXXXX
- *   573XXXXXXXXX  → 573XXXXXXXXX
- *   +573XXXXXXXXX → 573XXXXXXXXX
- *
- * @param {string|number} phone
- * @returns {{ valid: boolean, normalized: string, error?: string }}
- */
 function normalizeAndValidatePhone(phone) {
   if (!phone) return { valid: false, error: 'Teléfono vacío' };
-
-  // Eliminar todo excepto dígitos
   const digits = String(phone).replace(/\D/g, '');
-
   let normalized;
-
   if (digits.startsWith('57') && digits.length === 12) {
     normalized = digits;
   } else if (digits.startsWith('3') && digits.length === 10) {
@@ -470,18 +338,11 @@ function normalizeAndValidatePhone(phone) {
   } else if (digits.startsWith('573') && digits.length === 12) {
     normalized = digits;
   } else {
-    return {
-      valid: false,
-      normalized: digits,
-      error: `Formato inválido: ${digits} (${digits.length} dígitos)`
-    };
+    return { valid: false, normalized: digits, error: `Formato inválido: ${digits} (${digits.length} dígitos)` };
   }
-
-  // Validación final: exactamente 12 dígitos comenzando con 57
   if (!/^57\d{10}$/.test(normalized)) {
     return { valid: false, normalized, error: 'No cumple formato 57XXXXXXXXXX' };
   }
-
   return { valid: true, normalized };
 }
 
@@ -489,91 +350,56 @@ function normalizeAndValidatePhone(phone) {
 // APPOINTMENTS — Citas
 // ============================================
 
-/**
- * Obtiene la duración de un servicio por ID o nombre.
- * Retorna 30 minutos como fallback seguro.
- */
 function getServiceDuration(serviceId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Services');
   if (!sheet) return 30;
-
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return 30;
-
   const headers = data[0];
   const idCol       = headers.indexOf('id');
   const nameCol     = headers.indexOf('name');
   const durationCol = headers.indexOf('duration_min');
-
   if (durationCol === -1) return 30;
-
   const serviceStr = String(serviceId).trim().toLowerCase();
-
   for (let i = 1; i < data.length; i++) {
     const matchById   = idCol !== -1   && String(data[i][idCol]).trim() === serviceStr;
     const matchByName = nameCol !== -1 && String(data[i][nameCol]).trim().toLowerCase() === serviceStr;
-
     if (matchById || matchByName) {
       const duration = parseInt(data[i][durationCol]);
       return isNaN(duration) || duration <= 0 ? 30 : duration;
     }
   }
-
   return 30;
 }
 
-/**
- * Crea una cita con idempotencia:
- * - Usa LockService para prevenir inserciones concurrentes
- * - Verifica duplicado por (barber_id, date, time) antes de insertar
- * - Construye datetime_iso con parseDatetimeBogota (fuente de verdad)
- * - Envía email de confirmación si email_enabled = true en Settings
- *
- * @param {Object} data - { barber_id, customer_name, phone, email, service_name, date, time, notes }
- * @returns {Object} { success, id } | { error }
- */
 function createAppointment(data) {
   log('INFO', 'createAppointment', 'Iniciando', { barber_id: data.barber_id, date: data.date, time: data.time });
-
-  // --- Adquirir lock para prevenir duplicados por doble-click ---
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
   } catch (e) {
     return { error: 'El sistema está ocupado, intenta de nuevo en unos segundos' };
   }
-
   try {
-    // --- Leer settings una vez ---
     const settingsResult = getSettings();
     const settings = settingsResult.success ? settingsResult.data : {};
     const tzOffset = parseFloat(settings.timezone_offset) || -5;
 
-    // --- Verificar duplicado: misma fecha, hora y barbero ---
-    const existing = getAll('Appointments', {
-      barber_id: data.barber_id,
-      date: data.date,
-      time: data.time,
-      status: 'scheduled'
-    });
-
+    const existing = getAll('Appointments', { barber_id: data.barber_id, date: data.date, time: data.time, status: 'scheduled' });
     if (existing.success && existing.data.length > 0) {
       log('WARN', 'createAppointment', 'Duplicado detectado', { barber_id: data.barber_id, date: data.date, time: data.time });
       return { error: 'Ya existe una cita para ese barbero en esa fecha y hora' };
     }
 
-    // --- Construir datetime_iso con timezone correcto ---
     const appointmentDate = parseDatetimeBogota(data.date, data.time, tzOffset);
     if (!appointmentDate) {
       return { error: `No se pudo parsear la fecha: ${data.date} ${data.time}` };
     }
 
-    // --- Validar teléfono ---
     const phoneResult = normalizeAndValidatePhone(data.phone);
     if (!phoneResult.valid) {
       log('WARN', 'createAppointment', 'Teléfono inválido', { phone: data.phone, error: phoneResult.error });
-      // No bloqueamos la cita por teléfono inválido, solo logueamos
     }
 
     const serviceDuration = getServiceDuration(data.service_name);
@@ -587,7 +413,7 @@ function createAppointment(data) {
       date:            data.date,
       time:            data.time,
       duration_min:    serviceDuration,
-      datetime_iso:    appointmentDate.toISOString(), // ← fuente de verdad, construida correctamente
+      datetime_iso:    appointmentDate.toISOString(),
       status:          'scheduled',
       reminder_60min:  false,
       reminder_15min:  false,
@@ -596,11 +422,9 @@ function createAppointment(data) {
 
     const insertResult = insertRow('Appointments', appointmentData);
 
-    // --- Email de confirmación (feature flag) ---
     if (insertResult.success) {
       const emailEnabled = String(settings.email_enabled).toLowerCase();
       if (emailEnabled === 'true' && data.email && data.email.trim() !== '') {
-        // Resolver nombre del barbero para el email
         const barberMap = buildBarberMap();
         const barberName = barberMap[data.barber_id] || data.barber_id;
         sendConfirmationEmail({
@@ -627,19 +451,12 @@ function updateAppointmentStatus(id, status) {
 }
 
 // ============================================
-// BARBER MAP — Carga única, sin N+1
+// BARBER MAP
 // ============================================
 
-/**
- * Construye un mapa { id → name } de todos los barberos.
- * Llamar UNA VEZ fuera de loops para evitar lecturas repetidas a Sheets.
- *
- * @returns {Object} { barberId: barberName, ... }
- */
 function buildBarberMap() {
   const result = getAll('Users');
   if (!result.success) return {};
-
   const map = {};
   for (const user of result.data) {
     if (user.id) map[String(user.id).trim()] = user.name || user.id;
@@ -651,30 +468,15 @@ function buildBarberMap() {
 // PURGA DE CITAS ANTIGUAS
 // ============================================
 
-/**
- * Purga citas antiguas moviéndolas a la hoja Archive.
- *
- * Criterios de purga (configurables en Settings):
- *   - status 'done' o 'cancelled' con más de purge_after_days días
- *   - status 'scheduled' con más de purge_scheduled_after_days días
- *     (citas donde el cliente no llegó y nadie actualizó el status)
- *
- * Usa datetime_iso como fuente de verdad para la fecha de la cita.
- * Fallback a columna date si datetime_iso no existe o es inválido.
- */
 function purgeOldAppointments() {
   log('INFO', 'purge', 'Iniciando purga de citas antiguas');
-
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const appointmentsSheet = ss.getSheetByName('Appointments');
   const archiveSheet      = ss.getSheetByName('Archive');
-
   if (!appointmentsSheet || !archiveSheet) {
     log('ERROR', 'purge', 'Hojas requeridas no encontradas (Appointments, Archive)');
     return;
   }
-
-  // --- Leer settings una vez ---
   const settingsResult = getSettings();
   const settings = settingsResult.success ? settingsResult.data : {};
   const tzOffset              = parseFloat(settings.timezone_offset)             || -5;
@@ -682,21 +484,13 @@ function purgeOldAppointments() {
   const purgeScheduledAfterDays = parseInt(settings.purge_scheduled_after_days)  || 3;
 
   const now = getNowBogota(tzOffset);
-
-  // Calcular fechas de corte
   const cutoffDoneMs      = now.getTime() - purgeAfterDays        * 86400000;
   const cutoffScheduledMs = now.getTime() - purgeScheduledAfterDays * 86400000;
   const cutoffDone      = new Date(cutoffDoneMs);
   const cutoffScheduled = new Date(cutoffScheduledMs);
 
-  log('INFO', 'purge', 'Fechas de corte', {
-    cutoffDone:      cutoffDone.toISOString(),
-    cutoffScheduled: cutoffScheduled.toISOString()
-  });
-
   const data = appointmentsSheet.getDataRange().getValues();
   const headers = data[0];
-
   const datetimeIsoCol = headers.indexOf('datetime_iso');
   const dateCol        = headers.indexOf('date');
   const timeCol        = headers.indexOf('time');
@@ -713,41 +507,30 @@ function purgeOldAppointments() {
   for (let i = 1; i < data.length; i++) {
     const row    = data[i];
     const status = String(row[statusCol]).trim().toLowerCase();
-
-    // --- Resolver fecha de la cita usando datetime_iso como fuente de verdad ---
     let appointmentDate = null;
 
     if (datetimeIsoCol !== -1 && row[datetimeIsoCol]) {
-      // Caso ideal: usar el ISO guardado directamente
       appointmentDate = parseDatetimeBogota(row[datetimeIsoCol], null, tzOffset);
     }
-
     if (!appointmentDate && dateCol !== -1) {
-      // Fallback: reconstruir desde date + time
       const timeVal = timeCol !== -1 ? row[timeCol] : '00:00';
       appointmentDate = parseDatetimeBogota(row[dateCol], timeVal, tzOffset);
     }
-
     if (!appointmentDate) {
       log('WARN', 'purge', `Fila ${i + 1}: no se pudo parsear fecha, omitiendo`);
       continue;
     }
 
-    // --- Decidir si purgar según status y edad ---
     let shouldPurge = false;
-
     if ((status === 'done' || status === 'cancelled') && appointmentDate < cutoffDone) {
       shouldPurge = true;
-      log('DEBUG', 'purge', `Fila ${i + 1}: purgar por status ${status}`, { date: appointmentDate.toISOString() });
     } else if (status === 'scheduled' && appointmentDate < cutoffScheduled) {
-      // Cita scheduled antigua — el cliente no llegó
       shouldPurge = true;
-      log('DEBUG', 'purge', `Fila ${i + 1}: purgar scheduled antigua`, { date: appointmentDate.toISOString() });
     }
 
     if (shouldPurge) {
       rowsToArchive.push(row);
-      rowIndicesToDelete.push(i + 1); // +1 porque sheet es 1-indexed
+      rowIndicesToDelete.push(i + 1);
     }
   }
 
@@ -756,14 +539,11 @@ function purgeOldAppointments() {
     return;
   }
 
-  // --- Archivar: verificar/agregar headers en Archive ---
   const archiveLastRow = archiveSheet.getLastRow();
   if (archiveLastRow === 0) {
-    // Hoja vacía: agregar headers primero
     archiveSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     archiveSheet.getRange(2, 1, rowsToArchive.length, headers.length).setValues(rowsToArchive);
   } else {
-    // Verificar que Archive tenga headers (edge case: alguien los borró)
     const archiveHeaders = archiveSheet.getRange(1, 1, 1, archiveSheet.getLastColumn()).getValues()[0];
     if (!archiveHeaders[0]) {
       archiveSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -771,12 +551,10 @@ function purgeOldAppointments() {
     archiveSheet.getRange(archiveLastRow + 1, 1, rowsToArchive.length, headers.length).setValues(rowsToArchive);
   }
 
-  // --- Eliminar de Appointments en orden descendente para no desplazar índices ---
   rowIndicesToDelete.sort((a, b) => b - a);
   for (const rowIndex of rowIndicesToDelete) {
     appointmentsSheet.deleteRow(rowIndex);
   }
-
   log('INFO', 'purge', `Purga completada`, { archivadas: rowsToArchive.length });
 }
 
@@ -784,23 +562,10 @@ function purgeOldAppointments() {
 // RECORDATORIOS DE CITAS POR WHATSAPP
 // ============================================
 
-/**
- * Envía mensaje por WhatsApp via Evolution API con retry y backoff exponencial.
- * Reintenta hasta 3 veces en errores de servidor (5xx) para manejar
- * el cold start de Render free tier.
- *
- * @param {string} phone        - Número normalizado (57XXXXXXXXXX)
- * @param {string} message      - Texto del mensaje
- * @param {string} baseUrl      - URL base de Evolution API
- * @param {string} apiKey       - API key de Evolution
- * @param {string} instanceName - Nombre de la instancia
- * @returns {{ success: boolean, error?: string }}
- */
 function sendWhatsAppMessage(phone, message, baseUrl, apiKey, instanceName) {
   const url = `${baseUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
   const MAX_RETRIES = 3;
-  const BACKOFF_MS  = [2000, 4000, 8000]; // backoff exponencial
-
+  const BACKOFF_MS  = [2000, 4000, 8000];
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const response = UrlFetchApp.fetch(url, {
@@ -810,28 +575,21 @@ function sendWhatsAppMessage(phone, message, baseUrl, apiKey, instanceName) {
         payload:         JSON.stringify({ number: phone, text: message }),
         muteHttpExceptions: true
       });
-
       const code   = response.getResponseCode();
       const body   = response.getContentText();
       let result;
       try { result = JSON.parse(body); } catch (_) { result = { raw: body }; }
-
       if (code === 200 || code === 201) {
         log('INFO', 'whatsapp', `Mensaje enviado a ${phone} (intento ${attempt + 1})`);
         return { success: true };
       }
-
       log('WARN', 'whatsapp', `Respuesta ${code} en intento ${attempt + 1}`, { phone, result });
-
-      // Solo reintentar en errores de servidor (5xx)
       if (code < 500) {
         return { success: false, error: result.message || result.error || `HTTP ${code}` };
       }
-
       if (attempt < MAX_RETRIES - 1) {
         Utilities.sleep(BACKOFF_MS[attempt]);
       }
-
     } catch (e) {
       log('ERROR', 'whatsapp', `Excepción en intento ${attempt + 1}`, { phone, error: e.message });
       if (attempt < MAX_RETRIES - 1) {
@@ -841,30 +599,10 @@ function sendWhatsAppMessage(phone, message, baseUrl, apiKey, instanceName) {
       }
     }
   }
-
   return { success: false, error: 'Max retries exceeded' };
 }
 
-/**
- * Procesa y envía recordatorios de citas por WhatsApp.
- *
- * Flujo:
- * 1. Adquiere LockService para evitar ejecuciones concurrentes
- * 2. Lee Settings UNA VEZ (ventanas configurables, timezone, config Evolution)
- * 3. Carga barberMap UNA VEZ fuera del loop
- * 4. Itera citas scheduled y evalúa ventanas de tiempo
- * 5. Usa datetime_iso como fuente de verdad para calcular diffMin
- * 6. Marca reminder_Xmin = TRUE en la hoja solo si el envío fue exitoso
- *
- * Ventanas configurables en Settings:
- *   reminder_60_upper / reminder_60_lower  → ventana para recordatorio de 1h
- *   reminder_15_upper / reminder_15_lower  → ventana para recordatorio de 15min
- *
- * Las ventanas deben ser más amplias que el intervalo del trigger
- * para tolerar el drift de Apps Script (±5-10 min en plan gratuito).
- */
 function sendAppointmentReminders() {
-  // --- Lock para evitar race conditions entre ejecuciones del trigger ---
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(30000);
@@ -872,57 +610,35 @@ function sendAppointmentReminders() {
     log('WARN', 'reminders', 'No se pudo adquirir lock', { error: e.message });
     return { success: false, error: 'Lock timeout' };
   }
-
   try {
-    // --- Solo la API key viene de PropertiesService ---
     const config = getConfig();
     const { EVOLUTION_API_KEY } = config;
-
     if (!EVOLUTION_API_KEY) {
       log('ERROR', 'reminders', 'EVOLUTION_API_KEY no configurada. Ejecutar setupConfig()');
       return { success: false, error: 'Missing EVOLUTION_API_KEY' };
     }
-
-    // --- Settings: leer UNA VEZ antes del loop ---
-    // URL e instancia viven aquí (no son secretos, editables desde el panel)
     const settingsResult = getSettings();
     const settings = settingsResult.success ? settingsResult.data : {};
-
     const EVOLUTION_API_URL = String(settings.evolution_api_url || '').trim();
     const INSTANCE_NAME     = String(settings.instance_name     || '').trim();
-
     if (!EVOLUTION_API_URL || !INSTANCE_NAME) {
       log('ERROR', 'reminders', 'evolution_api_url o instance_name no configurados en Settings');
       return { success: false, error: 'Missing evolution_api_url or instance_name in Settings' };
     }
-
     const tzOffset = parseFloat(settings.timezone_offset) || -5;
-
-    // Ventanas de recordatorio configurables
-    // reminder_60: alerta cuando faltan ~60 min → ventana [lower, upper] en minutos
     const r60Upper = parseFloat(settings.reminder_60_upper) || 65;
     const r60Lower = parseFloat(settings.reminder_60_lower) || 50;
     const r15Upper = parseFloat(settings.reminder_15_upper) || 20;
     const r15Lower = parseFloat(settings.reminder_15_lower) || 5;
 
-    log('INFO', 'reminders', 'Configuración de ventanas', {
-      r60: `[${r60Lower}, ${r60Upper}]`,
-      r15: `[${r15Lower}, ${r15Upper}]`,
-      tzOffset
-    });
-
-    // --- Cargar hoja de citas ---
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Appointments');
     if (!sheet) {
       log('ERROR', 'reminders', 'Hoja Appointments no encontrada');
       return { success: false, error: 'Appointments sheet not found' };
     }
-
     const data    = sheet.getDataRange().getValues();
     const headers = data[0];
-
-    // Índices de columnas — calculados una sola vez
     const datetimeIsoCol = headers.indexOf('datetime_iso');
     const dateCol        = headers.indexOf('date');
     const timeCol        = headers.indexOf('time');
@@ -934,153 +650,85 @@ function sendAppointmentReminders() {
     const reminder60Col  = headers.indexOf('reminder_60min');
     const reminder15Col  = headers.indexOf('reminder_15min');
 
-    // Columnas mínimas requeridas
     if (statusCol === -1 || phoneCol === -1) {
       log('ERROR', 'reminders', 'Faltan columnas requeridas (status, phone)');
       return { success: false, error: 'Missing required columns' };
     }
-
     const now = getNowBogota(tzOffset);
-
-    // --- Identificar filas candidatas antes de cargar barberMap ---
-    // Esto evita leer Users si no hay citas que procesar
     const candidates = [];
     for (let i = 1; i < data.length; i++) {
       const status = String(data[i][statusCol]).trim().toLowerCase();
       if (status !== 'scheduled') continue;
-
-      // ¿Ya se enviaron ambos recordatorios?
       const r60 = reminder60Col !== -1 ? data[i][reminder60Col] : false;
       const r15 = reminder15Col !== -1 ? data[i][reminder15Col] : false;
-      if (isTruthy(r60) && isTruthy(r15)) continue; // ambos enviados, skip
-
+      if (isTruthy(r60) && isTruthy(r15)) continue;
       candidates.push(i);
     }
-
     if (candidates.length === 0) {
       log('INFO', 'reminders', 'No hay citas candidatas para recordatorio');
       return { success: true, sent: 0 };
     }
 
-    log('INFO', 'reminders', `${candidates.length} citas candidatas encontradas`);
-
-    // --- Cargar barberMap UNA VEZ (lazy load, solo si hay candidatas) ---
     const barberMap = buildBarberMap();
-
     let sentCount = 0;
-
     for (const i of candidates) {
       const row = data[i];
-
-      // --- Resolver fecha de la cita ---
       let appointmentDate = null;
-
-      // Prioridad 1: usar datetime_iso (fuente de verdad guardada al crear la cita)
       if (datetimeIsoCol !== -1 && row[datetimeIsoCol]) {
         appointmentDate = parseDatetimeBogota(row[datetimeIsoCol], null, tzOffset);
       }
-
-      // Fallback: reconstruir desde date + time si datetime_iso no existe o falló
       if (!appointmentDate && dateCol !== -1) {
         const timeVal = timeCol !== -1 ? row[timeCol] : '00:00';
         appointmentDate = parseDatetimeBogota(row[dateCol], timeVal, tzOffset);
       }
-
       if (!appointmentDate) {
-        log('WARN', 'reminders', `Fila ${i + 1}: no se pudo parsear fecha, omitiendo`);
         continue;
       }
-
-      // Citas que ya pasaron: no enviar
       if (appointmentDate <= now) {
-        log('DEBUG', 'reminders', `Fila ${i + 1}: cita ya pasó`, { iso: appointmentDate.toISOString() });
         continue;
       }
-
-      // Minutos restantes hasta la cita
       const diffMin = (appointmentDate.getTime() - now.getTime()) / 60000;
-
-      log('DEBUG', 'reminders', `Fila ${i + 1}`, {
-        diffMin:  Math.round(diffMin),
-        customer: row[nameCol],
-        date:     appointmentDate.toISOString()
-      });
-
-      // --- Datos del mensaje ---
       const phoneResult = normalizeAndValidatePhone(row[phoneCol]);
       if (!phoneResult.valid) {
-        log('WARN', 'reminders', `Fila ${i + 1}: teléfono inválido`, { phone: row[phoneCol], error: phoneResult.error });
         continue;
       }
-
       const phone      = phoneResult.normalized;
       const name       = row[nameCol]      || 'Cliente';
       const service    = row[serviceCol]   || '';
       const barberName = barberMap[String(row[barberIdCol]).trim()] || '';
-
-      // Línea de fecha legible para el mensaje — usar appointmentDate ya parseado
       const datePart = formatDateLocal(appointmentDate, tzOffset);
       const timePart = formatTimeLocal(appointmentDate, tzOffset);
 
-      // --- Recordatorio 60 minutos ---
       const r60Already = reminder60Col !== -1 ? isTruthy(row[reminder60Col]) : false;
-
       if (!r60Already && diffMin > r60Lower && diffMin <= r60Upper) {
         const msg = buildReminderMessage(name, datePart, timePart, service, barberName, 60);
         const result = sendWhatsAppMessage(phone, msg, EVOLUTION_API_URL, EVOLUTION_API_KEY, INSTANCE_NAME);
-
         if (result.success) {
           markReminderSent(sheet, headers, i, 'reminder_60min', reminder60Col);
-          log('INFO', 'reminders', `Recordatorio 60min enviado`, { phone, customer: name });
           sentCount++;
-          Utilities.sleep(1000); // pausa entre mensajes para no saturar la API
-        } else {
-          log('WARN', 'reminders', `Fallo al enviar recordatorio 60min`, { phone, error: result.error });
+          Utilities.sleep(1000);
         }
       }
-
-      // --- Recordatorio 15 minutos ---
       const r15Already = reminder15Col !== -1 ? isTruthy(row[reminder15Col]) : false;
-
       if (!r15Already && diffMin > r15Lower && diffMin <= r15Upper) {
         const msg = buildReminderMessage(name, datePart, timePart, service, barberName, 15);
         const result = sendWhatsAppMessage(phone, msg, EVOLUTION_API_URL, EVOLUTION_API_KEY, INSTANCE_NAME);
-
         if (result.success) {
           markReminderSent(sheet, headers, i, 'reminder_15min', reminder15Col);
-          log('INFO', 'reminders', `Recordatorio 15min enviado`, { phone, customer: name });
           sentCount++;
           Utilities.sleep(1000);
-        } else {
-          log('WARN', 'reminders', `Fallo al enviar recordatorio 15min`, { phone, error: result.error });
         }
       }
     }
-
-    log('INFO', 'reminders', `Proceso completado`, { enviados: sentCount });
     return { success: true, sent: sentCount };
-
   } finally {
     lock.releaseLock();
   }
 }
 
-/**
- * Construye el texto del recordatorio de WhatsApp.
- * Separado para facilitar edición del mensaje sin tocar la lógica.
- *
- * @param {string} name       - Nombre del cliente
- * @param {string} date       - Fecha legible "YYYY-MM-DD"
- * @param {string} time       - Hora "HH:MM"
- * @param {string} service    - Nombre del servicio
- * @param {string} barberName - Nombre del barbero
- * @param {number} minutesBefore - 60 o 15
- * @returns {string}
- */
 function buildReminderMessage(name, date, time, service, barberName, minutesBefore) {
   const timeLabel = minutesBefore === 60 ? 'menos de 1 hora' : '15 minutos';
   const emoji     = minutesBefore === 60 ? '⏰' : '🔔';
-
   let msg = `${emoji} Recordatorio de Cita\n\n`;
   msg += `Hola ${name}, tu cita es en ${timeLabel}:\n\n`;
   msg += `📅 Fecha: ${date}\n`;
@@ -1088,25 +736,12 @@ function buildReminderMessage(name, date, time, service, barberName, minutesBefo
   if (service)    msg += `✂️ Servicio: ${service}\n`;
   if (barberName) msg += `👤 Barbero: ${barberName}\n`;
   msg += `\n¡Te esperamos!`;
-
   return msg;
 }
 
-/**
- * Marca un recordatorio como enviado en la hoja.
- * Si la columna no existe aún, la crea.
- *
- * @param {Sheet}  sheet      - Hoja de Appointments
- * @param {Array}  headers    - Array de headers actuales
- * @param {number} rowIndex   - Índice base-0 en data[] (row real = rowIndex + 1 en sheet)
- * @param {string} colName    - Nombre de la columna ('reminder_60min' o 'reminder_15min')
- * @param {number} colIndex   - Índice en headers (-1 si no existe)
- */
 function markReminderSent(sheet, headers, rowIndex, colName, colIndex) {
-  const sheetRow = rowIndex + 1; // data[] es base-0, sheet es base-1 (+1 por header)
-
+  const sheetRow = rowIndex + 1;
   if (colIndex === -1) {
-    // La columna no existe: crearla al final
     const newCol = headers.length + 1;
     sheet.getRange(1, newCol).setValue(colName);
     sheet.getRange(sheetRow, newCol).setValue(true);
@@ -1115,13 +750,6 @@ function markReminderSent(sheet, headers, rowIndex, colName, colIndex) {
   }
 }
 
-/**
- * Formatea un objeto Date a string "HH:MM" en la zona horaria dada.
- *
- * @param {Date} date
- * @param {number} tzOffset
- * @returns {string} "HH:MM"
- */
 function formatTimeLocal(date, tzOffset) {
   const offset = typeof tzOffset === 'number' ? tzOffset : -5;
   const localMs = date.getTime() + offset * 3600000;
@@ -1131,40 +759,22 @@ function formatTimeLocal(date, tzOffset) {
   return `${hh}:${mm}`;
 }
 
-/**
- * Normaliza un valor de hora para mostrar en mensajes.
- * Maneja string "8:00" o "08:00", número decimal de Sheets, y Date.
- *
- * @param {string|number|Date} timeVal
- * @returns {string} "HH:MM"
- */
 function normalizTimeForDisplay(timeVal) {
   if (!timeVal && timeVal !== 0) return '';
-
   if (typeof timeVal === 'number') {
     const totalMin = Math.round(timeVal * 1440);
     const hh = Math.floor(totalMin / 60);
     const mm = totalMin % 60;
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
-
   if (timeVal instanceof Date) {
     return `${String(timeVal.getHours()).padStart(2, '0')}:${String(timeVal.getMinutes()).padStart(2, '0')}`;
   }
-
   const str = String(timeVal).trim();
-  // Normalizar "8:00" → "08:00"
   if (/^\d{1}:\d{2}$/.test(str)) return '0' + str;
   return str;
 }
 
-/**
- * Evalúa si un valor de celda de Sheets representa "true".
- * Sheets puede devolver: boolean true, string "TRUE"/"true"/"1", número 1.
- *
- * @param {*} val
- * @returns {boolean}
- */
 function isTruthy(val) {
   if (val === true || val === 1) return true;
   if (typeof val === 'string') {
@@ -1178,25 +788,15 @@ function isTruthy(val) {
 // EMAIL DE CONFIRMACIÓN — Feature flag
 // ============================================
 
-/**
- * Envía email de confirmación via Resend.
- * Solo se llama si email_enabled = true en Settings.
- * Preparado para activar en producción cuando esté listo.
- *
- * @param {Object} data - { email, customer_name, date, time, service_name, barber_name }
- * @returns {{ success: boolean, message?: string, error?: string }}
- */
 function sendConfirmationEmail(data) {
   if (!data.email || data.email.trim() === '') {
     return { success: true, message: 'No email provided, skipping' };
   }
-
   const config = getConfig();
   if (!config.RESEND_API_KEY || config.RESEND_API_KEY === 're_TU_API_KEY_AQUI') {
     log('WARN', 'email', 'RESEND_API_KEY no configurada');
     return { success: false, error: 'RESEND_API_KEY no configurada' };
   }
-
   const subject = `✅ Confirmación de tu cita — ${data.date}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -1219,29 +819,21 @@ function sendConfirmationEmail(data) {
       </div>
     </div>
   `;
-
   try {
     const response = UrlFetchApp.fetch('https://api.resend.com/emails', {
       method:  'POST',
-      headers: {
-        Authorization:  'Bearer ' + config.RESEND_API_KEY,
-        'Content-Type': 'application/json'
-      },
+      headers: { Authorization:  'Bearer ' + config.RESEND_API_KEY, 'Content-Type': 'application/json' },
       payload:            JSON.stringify({ from: 'onboarding@resend.dev', to: data.email.trim(), subject, html }),
       muteHttpExceptions: true
     });
-
     const code   = response.getResponseCode();
     const result = JSON.parse(response.getContentText());
-
     if (code === 200 || code === 201) {
       log('INFO', 'email', `Email enviado a ${data.email}`);
       return { success: true, message: 'Email sent' };
     }
-
     log('WARN', 'email', `Error Resend API`, { code, result });
     return { success: false, error: result.message || `HTTP ${code}` };
-
   } catch (e) {
     log('ERROR', 'email', 'Excepción al enviar email', { error: e.message });
     return { success: false, error: e.message };
@@ -1255,21 +847,16 @@ function sendConfirmationEmail(data) {
 function updateBlockedDays(barberId, blockedDays) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('BlockedDays');
-
   if (!sheet) {
     sheet = ss.insertSheet('BlockedDays');
     sheet.appendRow(['id', 'barber_id', 'blocked_days', 'created_at']);
   }
-
   const data    = sheet.getDataRange().getValues();
   const headers = data[0];
   const barberIdCol     = headers.indexOf('barber_id');
   const blockedDaysCol  = headers.indexOf('blocked_days');
-
   if (barberIdCol === -1) return { error: 'No se encontró columna barber_id' };
-
   const barberIdStr = String(barberId).trim();
-
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][barberIdCol]).trim() === barberIdStr) {
       if (blockedDaysCol !== -1) {
@@ -1278,7 +865,6 @@ function updateBlockedDays(barberId, blockedDays) {
       return { success: true, id: data[i][0], updated: true };
     }
   }
-
   return insertRow('BlockedDays', { barber_id: barberId, blocked_days: blockedDays });
 }
 
@@ -1286,23 +872,12 @@ function updateBlockedDays(barberId, blockedDays) {
 // WEB APP — Autenticación y endpoints
 // ============================================
 
-/**
- * Verifica autenticación del request.
- * getSettings público expone solo keys seguras (getPublicSettings).
- * Todos los demás endpoints requieren WEB_APP_API_KEY.
- */
 function checkAuth(e, data) {
   const config = getConfig();
-  if (!config.WEB_APP_API_KEY) return true; // sin key configurada: abierto (solo en dev)
-
+  if (!config.WEB_APP_API_KEY) return true;
   const action = (e && e.parameter ? e.parameter.action : null) || (data ? data.action : null);
-
-  // getSettings sin auth retorna solo settings públicos
   if (action === 'getSettings') return true;
-
-  const key = (e && e.parameter ? (e.parameter.key || e.parameter.apiKey) : null)
-    || (data ? (data.key || data.apiKey) : null);
-
+  const key = (e && e.parameter ? (e.parameter.key || e.parameter.apiKey) : null) || (data ? (data.key || data.apiKey) : null);
   return key === config.WEB_APP_API_KEY;
 }
 
@@ -1311,16 +886,13 @@ function doGet(e) {
     if (!checkAuth(e, null)) {
       return jsonResponse({ error: 'Unauthorized' });
     }
-
     if (e.parameter.payload) {
       const data = JSON.parse(decodeURIComponent(e.parameter.payload));
       return processRequest(data);
     }
-
     if (e.parameter.action === 'getSettings') {
       return jsonResponse(getPublicSettings());
     }
-
     return jsonResponse({ error: 'Invalid action' });
   } catch (error) {
     log('ERROR', 'doGet', 'Excepción', { error: error.message });
@@ -1331,11 +903,9 @@ function doGet(e) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
     if (!checkAuth(null, data)) {
       return jsonResponse({ error: 'Unauthorized' });
     }
-
     return processRequest(data);
   } catch (error) {
     log('ERROR', 'doPost', 'Excepción', { error: error.message });
@@ -1343,10 +913,8 @@ function doPost(e) {
   }
 }
 
-/** Helper para retornar JSON desde doGet/doPost */
 function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================
@@ -1357,15 +925,9 @@ const ALLOWED_SHEETS = ['Appointments', 'Users', 'Services', 'Unavailable', 'Blo
 
 function processRequest(data) {
   const action = data.action;
-
-  if (!action) {
-    return jsonResponse({ error: 'Acción no especificada' });
-  }
-
+  if (!action) return jsonResponse({ error: 'Acción no especificada' });
   let result;
-
   switch (action) {
-
     case 'insert':
     case 'update':
     case 'delete':
@@ -1380,30 +942,19 @@ function processRequest(data) {
       else                          result = getAll(data.sheet, data.filters || {});
       break;
     }
-
-    case 'getSettings': {
-      // Autenticado: retorna todos los settings
-      // Sin autenticar (doGet): retorna solo públicos (ver doGet)
+    case 'getSettings':
       result = getSettings();
       break;
-    }
-
-    case 'updateSetting': {
+    case 'updateSetting':
       result = updateSetting(data.key, data.value);
       break;
-    }
-
-    case 'createAppointment': {
+    case 'createAppointment':
       result = createAppointment(data);
       break;
-    }
-
-    case 'updateAppointmentStatus': {
+    case 'updateAppointmentStatus':
       result = updateAppointmentStatus(data.id, data.status);
       break;
-    }
-
-    case 'createUnavailable': {
+    case 'createUnavailable':
       result = insertRow('Unavailable', {
         barber_id:  data.barber_id,
         start_date: data.start_date,
@@ -1414,14 +965,10 @@ function processRequest(data) {
         reason:     data.reason || ''
       });
       break;
-    }
-
-    case 'deleteUnavailable': {
+    case 'deleteUnavailable':
       result = deleteRow('Unavailable', data.id);
       break;
-    }
-
-    case 'createService': {
+    case 'createService':
       result = insertRow('Services', {
         name:         data.name,
         duration_min: data.duration_min,
@@ -1430,9 +977,7 @@ function processRequest(data) {
         active:       data.active !== undefined ? data.active : true
       });
       break;
-    }
-
-    case 'updateService': {
+    case 'updateService':
       const serviceUpdates = {};
       if (data.name         !== undefined) serviceUpdates.name         = data.name;
       if (data.duration_min !== undefined) serviceUpdates.duration_min = data.duration_min;
@@ -1441,14 +986,10 @@ function processRequest(data) {
       if (data.active       !== undefined) serviceUpdates.active       = data.active;
       result = updateRow('Services', data.id, serviceUpdates);
       break;
-    }
-
-    case 'deleteService': {
+    case 'deleteService':
       result = deleteRow('Services', data.id);
       break;
-    }
-
-    case 'createUser': {
+    case 'createUser':
       result = insertRow('Users', {
         name:   data.name,
         email:  data.email  || '',
@@ -1457,9 +998,7 @@ function processRequest(data) {
         active: data.active !== undefined ? data.active : true
       });
       break;
-    }
-
-    case 'updateUser': {
+    case 'updateUser':
       const userUpdates = {};
       if (data.name   !== undefined) userUpdates.name   = data.name;
       if (data.email  !== undefined) userUpdates.email  = data.email;
@@ -1468,28 +1007,18 @@ function processRequest(data) {
       if (data.active !== undefined) userUpdates.active = data.active;
       result = updateRow('Users', data.id, userUpdates);
       break;
-    }
-
-    case 'deleteUser': {
+    case 'deleteUser':
       result = deleteRow('Users', data.id);
       break;
-    }
-
-    case 'updateBlockedDays': {
+    case 'updateBlockedDays':
       result = updateBlockedDays(data.barber_id, data.blocked_days);
       break;
-    }
-
-    case 'sendReminders': {
+    case 'sendReminders':
       result = sendAppointmentReminders();
       break;
-    }
-
-    default: {
+    default:
       result = { error: `Acción no reconocida: ${action}` };
-    }
   }
-
   return jsonResponse(result);
 }
 
@@ -1497,32 +1026,16 @@ function processRequest(data) {
 // TRIGGERS
 // ============================================
 
-/**
- * Configura todos los triggers del proyecto de forma segura.
- * Solo elimina triggers propios (purga y recordatorios),
- * NO toca otros triggers existentes (ej: onEdit, onFormSubmit).
- */
 function setupAllTriggers() {
   const OWN_FUNCTIONS = ['purgeOldAppointments', 'sendAppointmentReminders'];
-
   const triggers = ScriptApp.getProjectTriggers();
   for (const trigger of triggers) {
     if (OWN_FUNCTIONS.includes(trigger.getHandlerFunction())) {
       ScriptApp.deleteTrigger(trigger);
     }
   }
-
-  ScriptApp.newTrigger('purgeOldAppointments')
-    .timeBased()
-    .atHour(3)
-    .everyDays(1)
-    .create();
-
-  ScriptApp.newTrigger('sendAppointmentReminders')
-    .timeBased()
-    .everyMinutes(10)
-    .create();
-
+  ScriptApp.newTrigger('purgeOldAppointments').timeBased().atHour(3).everyDays(1).create();
+  ScriptApp.newTrigger('sendAppointmentReminders').timeBased().everyMinutes(10).create();
   log('INFO', 'triggers', 'Triggers configurados: purga 3AM + recordatorios cada 10min');
 }
 
@@ -1561,46 +1074,38 @@ function clearArchive() {
   log('INFO', 'maintenance', 'Archive limpiado');
 }
 
-/** Ejecutar manualmente para probar la purga sin esperar el trigger */
 function testPurge() {
   log('INFO', 'test', 'Iniciando prueba de purga manual');
   purgeOldAppointments();
   log('INFO', 'test', 'Prueba de purga completada');
 }
 
-/** Ejecutar manualmente para probar el envío de recordatorios */
 function testReminders() {
   log('INFO', 'test', 'Iniciando prueba de recordatorios manual');
   const result = sendAppointmentReminders();
   log('INFO', 'test', 'Prueba completada', result);
 }
 
-/** Diagnóstico: muestra cómo se parsean las fechas de todas las citas activas */
 function diagnoseDateParsing() {
   const ss      = SpreadsheetApp.getActiveSpreadsheet();
   const sheet   = ss.getSheetByName('Appointments');
   if (!sheet) { Logger.log('Hoja Appointments no encontrada'); return; }
-
   const settingsResult = getSettings();
   const tzOffset = parseFloat((settingsResult.data || {}).timezone_offset) || -5;
-
   const data    = sheet.getDataRange().getValues();
   const headers = data[0];
   const datetimeIsoCol = headers.indexOf('datetime_iso');
   const dateCol        = headers.indexOf('date');
   const timeCol        = headers.indexOf('time');
-
   Logger.log('=== DIAGNÓSTICO DE FECHAS ===');
   Logger.log(`Now: ${new Date().toISOString()}`);
   Logger.log(`TZ offset: ${tzOffset}`);
-
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     Logger.log(`--- Fila ${i + 1} ---`);
     Logger.log(`  datetime_iso raw: ${row[datetimeIsoCol]} (${typeof row[datetimeIsoCol]})`);
     Logger.log(`  date raw: ${row[dateCol]} (${typeof row[dateCol]})`);
     Logger.log(`  time raw: ${row[timeCol]} (${typeof row[timeCol]})`);
-
     let parsed = null;
     if (datetimeIsoCol !== -1 && row[datetimeIsoCol]) {
       parsed = parseDatetimeBogota(row[datetimeIsoCol], null, tzOffset);
@@ -1610,7 +1115,6 @@ function diagnoseDateParsing() {
       parsed = parseDatetimeBogota(row[dateCol], row[timeCol], tzOffset);
       Logger.log(`  Parsed from date+time: ${parsed ? parsed.toISOString() : 'FALLO'}`);
     }
-
     const diffMin = parsed ? (parsed.getTime() - Date.now()) / 60000 : null;
     Logger.log(`  DiffMin: ${diffMin !== null ? Math.round(diffMin) : 'N/A'}`);
   }
