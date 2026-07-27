@@ -109,7 +109,8 @@ async function fetchAppsScript<T>(
 async function updateBlockedDays(payload: { barber_id: string; blocked_days: string }): Promise<ApiResponse<{ success: boolean }>> {
   const result = await fetchAppsScript<{ success: boolean }>({
     action: 'updateBlockedDays',
-    payload,
+    barber_id: payload.barber_id,
+    blocked_days: payload.blocked_days,
   });
   if (result.success) {
     invalidateBlockedDaysCache();
