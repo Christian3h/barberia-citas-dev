@@ -294,14 +294,17 @@ function getNowBogota(tzOffset) {
  * @returns {string} "YYYY-MM-DD"
  */
 function formatDateLocal(date, tzOffset) {
-  const offset = typeof tzOffset === 'number' ? tzOffset : -5;
-  // Ajustar el Date al offset local para extraer componentes correctos
-  const localMs = date.getTime() + offset * 3600000;
-  const localDate = new Date(localMs);
-  const y = localDate.getUTCFullYear();
-  const m = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  if (!date) return '';
+  if (date instanceof Date) {
+    return Utilities.formatDate(date, 'America/Bogota', 'yyyy-MM-dd');
+  }
+  let str = String(date).trim();
+  if (str.includes('T')) str = str.split('T')[0];
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    const p = str.split('/');
+    return `${p[2]}-${p[1]}-${p[0]}`;
+  }
+  return str;
 }
 
 // ============================================
