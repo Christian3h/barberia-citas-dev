@@ -1,6 +1,7 @@
 import { BarberService } from '@/types';
-import { useState } from 'react'
+import { useState } from 'react';
 import { appsScriptApi } from '@/services';
+import { formatCOP } from '@/utils';
 
 interface ServicesManagerProps {
   allServices: BarberService[]
@@ -185,7 +186,7 @@ export function ServicesManager({
                     </div>
                   </td>
                   <td>{service.duration_min} min</td>
-                  <td>${service.price.toLocaleString()}</td>
+                  <td>{formatCOP(service.price)}</td>
                   <td>
                     <button
                       className={`status-toggle ${(service.active ?? true) ? 'active' : 'inactive'}`}

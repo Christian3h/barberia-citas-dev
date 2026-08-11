@@ -4,7 +4,7 @@
 // ============================================
 
 import { useServices, useBarbers } from '@/hooks';
-import { formatDisplayDate, formatDuration } from '@/utils';
+import { formatDisplayDate, formatDuration, formatCOP } from '@/utils';
 import './ConfirmationModal.css';
 
 interface AppointmentSummary {
@@ -63,7 +63,7 @@ export function ConfirmationModal({
               {appointment.service_name} 
               {service && (
                 <span className="service-meta">
-                  ({formatDuration(service.duration_min)} - ${service.price.toLocaleString()})
+                  ({formatDuration(service.duration_min)} - {formatCOP(service.price)})
                 </span>
               )}
             </span>

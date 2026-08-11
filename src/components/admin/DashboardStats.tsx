@@ -1,4 +1,5 @@
-import type { Appointment, BarberService, User } from '@/types'
+import type { Appointment, BarberService, User } from '@/types';
+import { formatCOP } from '@/utils';
 
 interface DashboardStatsProps {
   allAppointments: Appointment[]
@@ -59,7 +60,7 @@ export function DashboardStats({
         <div className="stat-card stat-revenue">
           <div className="stat-icon">💰</div>
           <div className="stat-value">
-            ${revenue.toLocaleString()}
+            {formatCOP(revenue)}
           </div>
           <div className="stat-label">Ingresos</div>
         </div>

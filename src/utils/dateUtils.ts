@@ -294,3 +294,20 @@ export function formatDuration(minutes: number): string {
   }
   return `${hours}h ${mins}min`;
 }
+
+/**
+ * Formatea un precio a Pesos Colombianos (COP)
+ * Ejemplo: 25000 -> "$ 25.000 COP"
+ */
+export function formatCOP(amount: number | string): string {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (typeof num !== 'number' || isNaN(num)) return '$ 0 COP';
+
+  const formattedNumber = new Intl.NumberFormat('es-CO', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+
+  return `$ ${formattedNumber} COP`;
+}

@@ -4,7 +4,7 @@
 // ============================================
 
 import { useServices } from '@/hooks';
-import { formatDuration } from '@/utils';
+import { formatDuration, formatCOP } from '@/utils';
 import './ServiceSelector.css';
 
 interface ServiceSelectorProps {
@@ -47,7 +47,7 @@ export function ServiceSelector({
             <span className="service-name">{service.name}</span>
             <span className="service-details">
               <span className="service-duration">{formatDuration(service.duration_min)}</span>
-              <span className="service-price">${service.price.toLocaleString()}</span>
+              <span className="service-price">{formatCOP(service.price)}</span>
             </span>
             {service.description && (
               <span className="service-description">{service.description}</span>
