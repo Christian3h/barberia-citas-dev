@@ -11,9 +11,7 @@ import type {
 } from '@/types';
 import {
   generateTimeSlots,
-  timeSlotCollides,
   dateIsInRange,
-  calculateEndTime,
   parseDate,
   formatDate,
 } from '@/utils/dateUtils';
@@ -104,50 +102,65 @@ export function getAvailableSlots(
     minTime = `${hours}:${minutes}`;
   }
 
-  // 5. Filtrar slots disponibles
+  // Convertir horario de cierre a minutos desde medianoche
+  const [bEndH, bEndM] = business_end.split(':').map(Number);
+  const businessEndMin = (isNaN(bEndH) ? 20 : bEndH) * 60 + (isNaN(bEndM) ? 0 : bEndM);
+
+  // Convertir hora de inicio mínima para el día actual a minutos
+  const [minH, minM] = minTime.split(':').map(Number);
+  const minTimeMin = (isNaN(minH) ? 0 : minH) * 60 + (isNaN(minM) ? 0 : minM);
+
+  // 5. Filtrar slots disponibles basándose estrictamente en la duración del servicio seleccionado
   const availableSlots = allSlots.filter((slotTime) => {
-    const slotEndTime = calculateEndTime(slotTime, duration_min);
+    const [sH, sM] = slotTime.split(':').map(Number);
+    const slotStartMin = sH * 60 + sM;
+    const slotEndMin = slotStartMin + duration_min;
 
-    // Verificar que el slot + duración no exceda el horario de cierre
-    if (slotEndTime > business_end) {
+    // A. Filtrar si la cita terminara después del horario de cierre del negocio
+    if (slotEndMin > businessEndMin) {
       return false;
     }
 
-    // Verificar anticipación mínima para el día actual
-    if (isToday && slotTime < minTime) {
+    // B. Filtrar si es el día actual y la hora de inicio es menor a minTime
+    if (isToday && slotStartMin < minTimeMin) {
       return false;
     }
 
-    // Verificar colisiones con citas existentes
+    // C. Verificar colisiones con citas existentes para la duración requerida
     const collidesWithAppointment = dayAppointments.some((apt) => {
-      // Usar duración de la cita existente. Si es 0, null o undefined, usar slot_interval_min o 30
       const aptDuration = (typeof apt.duration_min === 'number' && apt.duration_min > 0) 
         ? apt.duration_min 
         : (slot_interval_min || 30);
-      const aptEndTime = calculateEndTime(apt.time, aptDuration);
       
-      // El slot colisiona si:
-      // - El inicio del slot está antes de que termine la cita existente Y
-      // - El fin del slot está después de que empiece la cita existente
-      const collides = timeSlotCollides(slotTime, duration_min, apt.time, aptEndTime);
-      
-      return collides;
+      const [aptH, aptM] = String(apt.time || '00:00').split(':').map(Number);
+      const aptStartMin = (isNaN(aptH) ? 0 : aptH) * 60 + (isNaN(aptM) ? 0 : aptM);
+      const aptEndMin = aptStartMin + aptDuration;
+
+      // Colisión si se superponen los rangos [slotStartMin, slotEndMin) y [aptStartMin, aptEndMin)
+      return slotStartMin < aptEndMin && slotEndMin > aptStartMin;
     });
 
     if (collidesWithAppointment) {
       return false;
     }
 
-    // Verificar colisiones con bloqueos
+    // D. Verificar colisiones con bloqueos (Unavailable) para la duración requerida
     const collidesWithUnavailable = dayUnavailable.some((u) => {
-      // Si es día completo bloqueado
       if (u.full_day) {
         return true;
       }
 
-      // Si tiene horarios específicos
       if (u.start_time && u.end_time) {
-        return timeSlotCollides(slotTime, duration_min, u.start_time, u.end_time);
+        const [uStartH, uStartM] = String(u.start_time).split(':').map(Number);
+        const [uEndH, uEndM] = String(u.end_time).split(':').map(Number);
+        const uStartMin = (isNaN(uStartH) ? 0 : uStartH) * 60 + (isNaN(uStartM) ? 0 : uStartM);
+        let uEndMin = (isNaN(uEndH) ? 0 : uEndH) * 60 + (isNaN(uEndM) ? 0 : uEndM);
+
+        if (uEndMin <= uStartMin) {
+          uEndMin = uStartMin + 60;
+        }
+
+        return slotStartMin < uEndMin && slotEndMin > uStartMin;
       }
 
       return false;
