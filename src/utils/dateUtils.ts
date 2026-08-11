@@ -30,27 +30,51 @@ export function formatDateTimeISO(date: Date): string {
  * Parsea una fecha YYYY-MM-DD a Date
  */
 export function parseDate(dateStr: string): Date {
-  return parse(dateStr, 'yyyy-MM-dd', new Date());
+  try {
+    if (!dateStr) return new Date(NaN);
+    let str = String(dateStr).trim();
+    if (str.includes('T')) str = str.split('T')[0];
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+      const p = str.split('/');
+      str = `${p[2]}-${p[1]}-${p[0]}`;
+    }
+    const parsed = parse(str, 'yyyy-MM-dd', new Date());
+    return isNaN(parsed.getTime()) ? new Date(NaN) : parsed;
+  } catch (e) {
+    return new Date(NaN);
+  }
 }
 
 /**
  * Parsea una hora HH:MM a Date (usando la fecha actual como base)
  */
 export function parseTime(timeStr: string, baseDate: Date = new Date()): Date {
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  const result = new Date(baseDate);
-  result.setHours(hours, minutes, 0, 0);
-  return result;
+  try {
+    if (!timeStr) return new Date(NaN);
+    const str = String(timeStr).trim();
+    const match = str.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return new Date(NaN);
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const result = new Date(baseDate);
+    result.setHours(hours, minutes, 0, 0);
+    return result;
+  } catch (e) {
+    return new Date(NaN);
+  }
 }
 
 /**
  * Combina fecha y hora en un Date
  */
 export function combineDateAndTime(dateStr: string, timeStr: string): Date {
-  const date = parseDate(dateStr);
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  try {
+    const date = parseDate(dateStr);
+    const timeDate = parseTime(timeStr, date);
+    return isNaN(timeDate.getTime()) ? date : timeDate;
+  } catch (e) {
+    return new Date(NaN);
+  }
 }
 
 /**
@@ -104,43 +128,80 @@ export function timeSlotCollides(
   rangeEnd: string,
   baseDate: Date = new Date()
 ): boolean {
-  const slotStart = parseTime(slotTime, baseDate);
-  const slotEnd = addMinutes(slotStart, slotDurationMin);
-  const rStart = parseTime(rangeStart, baseDate);
-  const rEnd = parseTime(rangeEnd, baseDate);
+  try {
+    const slotStart = parseTime(slotTime, baseDate);
+    const slotEnd = addMinutes(slotStart, slotDurationMin);
+    const rStart = parseTime(rangeStart, baseDate);
+    let rEnd = parseTime(rangeEnd, baseDate);
 
-  // Colisión si hay superposición:
-  // El slot empieza antes de que termine el rango Y el slot termina después de que empiece el rango
-  // Usamos < y > (no <= y >=) para permitir citas consecutivas
-  const slotStartMs = slotStart.getTime();
-  const slotEndMs = slotEnd.getTime();
-  const rangeStartMs = rStart.getTime();
-  const rangeEndMs = rEnd.getTime();
-  
-  return slotStartMs < rangeEndMs && slotEndMs > rangeStartMs;
+    if (isNaN(slotStart.getTime()) || isNaN(rStart.getTime()) || isNaN(rEnd.getTime())) {
+      return false;
+    }
+
+    // Si la hora de fin es menor o igual a la hora de inicio (ej: 08:40 a 03:00 por error), tratar rEnd como el mismo valor o 23:59
+    if (rEnd.getTime() <= rStart.getTime()) {
+      rEnd = addMinutes(rStart, 60);
+    }
+
+    const slotStartMs = slotStart.getTime();
+    const slotEndMs = slotEnd.getTime();
+    const rangeStartMs = rStart.getTime();
+    const rangeEndMs = rEnd.getTime();
+
+    return slotStartMs < rangeEndMs && slotEndMs > rangeStartMs;
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
- * Verifica si una fecha está dentro de un rango de fechas
+ * Verifica si una fecha está dentro de un rango de fechas de forma segura.
+ * Tolera fechas invertidas (start > end) y formatos no estándar.
  */
 export function dateIsInRange(
   date: string,
   startDate: string,
   endDate: string
 ): boolean {
-  const d = parseDate(date);
-  const start = parseDate(startDate);
-  const end = parseDate(endDate);
+  try {
+    if (!date || !startDate || !endDate) return false;
 
-  return isWithinInterval(d, { start, end });
+    const d = parseDate(date);
+    let start = parseDate(startDate);
+    let end = parseDate(endDate);
+
+    if (isNaN(d.getTime()) || isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return false;
+    }
+
+    // Si startDate > endDate (ej. 17/08/2026 a 07/08/2026 por error de tipeo en Sheets), auto-corregir rango
+    if (start.getTime() > end.getTime()) {
+      const temp = start;
+      start = end;
+      end = temp;
+    }
+
+    // Ajustar fin del día a las 23:59:59 para incluir el día final completo
+    end.setHours(23, 59, 59, 999);
+
+    return isWithinInterval(d, { start, end });
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
  * Formatea fecha para mostrar al usuario
  */
 export function formatDisplayDate(dateStr: string): string {
-  const date = parseDate(dateStr);
-  return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
+  try {
+    if (!dateStr) return '';
+    const date = parseDate(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
+  } catch (e) {
+    return dateStr || '';
+  }
 }
 
 /**

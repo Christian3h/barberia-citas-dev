@@ -636,3 +636,31 @@
   margin-top: 10px;
   margin-bottom: 20px;
 }
+
+/* Notes Styles */
+.notes-cell {
+  max-width: 200px;
+}
+
+.notes-badge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
+  border: 1px dashed var(--border-color);
+  word-break: break-word;
+}
+
+.no-notes {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.upcoming-notes {
+  font-size: var(--font-size-xs);
+  color: var(--color-accent);
+  margin-top: 4px;
+  font-style: italic;
+}

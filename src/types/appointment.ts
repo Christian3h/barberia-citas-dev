@@ -7,6 +7,9 @@ export type Appointment = {
   service_name: string;
   barber_id: string;
   phone?: string;
+  email?: string;
   date: string;
   time: string;
+  duration_min?: number;
+  notes?: string;
 };

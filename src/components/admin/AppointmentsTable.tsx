@@ -69,6 +69,7 @@ export function AppointmentsTable ({
                   <th>Servicio</th>
                   <th>Barbero</th>
                   <th>Teléfono</th>
+                  <th>Notas</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -84,6 +85,15 @@ export function AppointmentsTable ({
                     <td>{serviceName}</td>
                     <td>{barbers.find(b => b.id === apt.barber_id)?.name || apt.barber_id}</td>
                     <td>{apt.phone}</td>
+                    <td className="notes-cell">
+                      {apt.notes && apt.notes.trim() !== '' ? (
+                        <span className="notes-badge" title={apt.notes}>
+                          📝 {apt.notes}
+                        </span>
+                      ) : (
+                        <span className="no-notes">-</span>
+                      )}
+                    </td>
                     <td>
                         <span className={`status-badge status-${apt.status}`}>
                             {APPOINTMENT_STATUS_LABELS[apt.status]?.label || apt.status}

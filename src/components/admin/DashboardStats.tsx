@@ -83,6 +83,11 @@ export function DashboardStats({
                   {apt.service_name} ·{' '}
                   {barbers.find(b => b.id === apt.barber_id)?.name}
                 </div>
+                {apt.notes && apt.notes.trim() !== '' && (
+                  <div className="upcoming-notes">
+                    📝 {apt.notes}
+                  </div>
+                )}
               </div>
             </div>
           ))}
