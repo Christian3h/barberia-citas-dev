@@ -12,6 +12,7 @@ import {
   TimeSlotPicker,
   CustomerForm,
   ConfirmationModal,
+  ToastNotification,
 } from '@/components';
 import { useAppointments } from '@/hooks';
 import { googleSheetsService } from '@/services';
@@ -53,6 +54,8 @@ const initialFormData: BookingFormData = {
  * Devuelve la cita conflictiva o undefined.
  */
 async function findConflict(formData: BookingFormData) {
+  // Limpiar caché para obtener la lista de citas en tiempo real directo del servidor
+  googleSheetsService.clearAllCache();
   const existing = await googleSheetsService.getAppointmentsByDate(formData.date);
 
   return existing.find((apt) => {
@@ -216,12 +219,16 @@ export function BookingPage() {
         setBookingSuccess(true);
         setFormData(initialFormData);
       } else {
-        setBookingError(response.error || 'Error al crear la cita');
+        setBookingError(response.error || 'Este horario acaba de ser ocupado. Por favor selecciona otro.');
+        setFormData((prev) => ({ ...prev, time: '' }));
+        googleSheetsService.clearAllCache();
       }
     } catch {
       setShowConfirmation(false);
       setIsLoadingConfirmedAppointmentInfo(false);
       setBookingError('Error de conexión. Por favor intenta de nuevo.');
+      setFormData((prev) => ({ ...prev, time: '' }));
+      googleSheetsService.clearAllCache();
     } finally {
       setIsSubmitting(false);
     }
@@ -276,6 +283,12 @@ export function BookingPage() {
 
   return (
     <div className="booking-page">
+      <ToastNotification
+        message={bookingError}
+        type="error"
+        onClose={() => setBookingError(null)}
+      />
+
       <header className="booking-header">
         <h1>Agenda tu cita</h1>
         <p>Selecciona el servicio, barbero, fecha y hora que prefieras</p>

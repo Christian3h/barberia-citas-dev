@@ -1,0 +1,101 @@
+/* ============================================
+   ESTILOS: ToastNotification
+   Banner de alerta flotante fijo en pantalla
+   ============================================ */
+
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 90vw;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  animation: slideDownToast 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownToast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.toast-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.toast-close-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0.75;
+  transition: opacity 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Variaciones por Tipo */
+.toast-error {
+  background: rgba(45, 12, 12, 0.95);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.25);
+}
+
+.toast-success {
+  background: rgba(12, 45, 20, 0.95);
+  border: 1px solid #10b981;
+  color: #a7f3d0;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25);
+}
+
+.toast-warning {
+  background: rgba(45, 35, 12, 0.95);
+  border: 1px solid #f59e0b;
+  color: #fde68a;
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+}
+
+.toast-info {
+  background: rgba(12, 30, 45, 0.95);
+  border: 1px solid #3b82f6;
+  color: #bfdbfe;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.25);
+}

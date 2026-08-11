@@ -4,3 +4,5 @@ export { DatePicker } from './DatePicker';
 export { TimeSlotPicker } from './TimeSlotPicker';
 export { CustomerForm } from './CustomerForm';
 export { ConfirmationModal } from './ConfirmationModal';
+export { ToastNotification } from './ToastNotification/ToastNotification';
+
