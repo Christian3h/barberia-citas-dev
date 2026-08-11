@@ -242,9 +242,7 @@ function parseDatetimeBogota(dateInput, timeInput, tzOffset) {
       const mm = totalMinutes % 60;
       timePart = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
     } else if (timeInput instanceof Date) {
-      const hh = String(timeInput.getHours()).padStart(2, '0');
-      const mm = String(timeInput.getMinutes()).padStart(2, '0');
-      timePart = `${hh}:${mm}`;
+      timePart = Utilities.formatDate(timeInput, 'America/Bogota', 'HH:mm');
     } else if (timeInput) {
       const str = String(timeInput).trim();
       if (/^\d{1}:\d{2}$/.test(str)) {
@@ -588,7 +586,9 @@ function timeToMinutes(timeVal) {
     return Math.round(timeVal * 1440);
   }
   if (timeVal instanceof Date) {
-    return timeVal.getHours() * 60 + timeVal.getMinutes();
+    const formatted = Utilities.formatDate(timeVal, 'America/Bogota', 'HH:mm');
+    const [h, m] = formatted.split(':').map(Number);
+    return h * 60 + m;
   }
   const str = String(timeVal).trim();
   const match = str.match(/^(\d{1,2}):(\d{2})$/);
@@ -1308,7 +1308,7 @@ function normalizTimeForDisplay(timeVal) {
   }
 
   if (timeVal instanceof Date) {
-    return `${String(timeVal.getHours()).padStart(2, '0')}:${String(timeVal.getMinutes()).padStart(2, '0')}`;
+    return Utilities.formatDate(timeVal, 'America/Bogota', 'HH:mm');
   }
 
   const str = String(timeVal).trim();
